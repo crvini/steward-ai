@@ -93,12 +93,22 @@ Everything below is wired to the live PayPal sandbox — no mocks, no stubs.
 | **Browser-safe client token** | `GET /api/paypal/client-token` | `response_type=client_token`, domain-bound and short-lived, so `PAYPAL_CLIENT_SECRET` never reaches the browser. |
 | **Orders API v2 — create** | `POST /api/gifts` | Server-side, with the Gift id as `custom_id` **and** as the `PayPal-Request-Id` idempotency key, so a retried create cannot double-charge. |
 | **Orders API v2 — capture** | `POST /api/gifts/:orderId/capture` | Server-side. Persists the capture id, `paypal_fee`, `net_amount` and payer identity, plus the verbatim payload. |
+| **Catalog Products + Billing Plans** | `apps/api/src/paypal/subscriptions.ts` | One plan per fund at **$1.00 per unit** with `quantity_supported`, created on demand and remembered, so any monthly amount works without a plan per amount. |
+| **Subscriptions API v1** | `POST /api/subscriptions` | Monthly giving. The donor's dollars ride in `quantity`; the Gift id is the `custom_id` echoed on every recurring charge. |
 | **Webhooks** | `POST /api/webhooks/paypal` | Mounted ahead of the JSON body parser so signature verification sees PayPal's exact bytes. |
 | **Webhook signature verification** | `apps/api/src/paypal/webhooks.ts` | Every notification goes through `verify-webhook-signature`. `cert_url` is checked against PayPal hosts first, so a forged header cannot redirect the certificate lookup. |
 | **Transaction Search** | `GET /api/paypal/reconcile?days=30` | Compares PayPal's own record against our ledger and reports anything we never wrote down. Respects the 31-day cap and the no-fractional-seconds rule. |
 
-Still to come, per [`docs/SPEC.md`](docs/SPEC.md) §4: Subscriptions API for monthly
-giving, and Payouts API for distributions.
+Webhook events handled: `PAYMENT.CAPTURE.COMPLETED`, `BILLING.SUBSCRIPTION.ACTIVATED`,
+`BILLING.SUBSCRIPTION.CANCELLED` / `EXPIRED` / `SUSPENDED`, and `PAYMENT.SALE.COMPLETED`
+(each monthly charge, recorded as its own ledger row against the same gift).
+
+Still to come, per [`docs/SPEC.md`](docs/SPEC.md) §4: Payouts API for distributions,
+and the PayPal Agent Toolkit behind the two-key approval gate.
+
+**One honest limitation:** PayPal billing plans carry a fixed price, so monthly
+giving is expressed as `quantity` × $1.00 and therefore only supports whole
+dollars. The API rejects cents on a monthly gift rather than quietly rounding.
 
 ### How money is kept honest
 
