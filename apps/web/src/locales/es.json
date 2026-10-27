@@ -299,5 +299,14 @@
     "missingNote": "Dinero que PayPal procesó y nosotros nunca anotamos.",
     "none": "Nada por acá.",
     "lagNote": "Transaction Search de PayPal puede tardar horas en mostrar una captura reciente, así que una ofrenda de hace minutos puede aparecer acá hasta que se ponga al día."
+  },
+  "member": {
+    "needsTitle": "Dónde la iglesia necesita ayuda",
+    "recurringTitle": "Tus ofrendas recurrentes",
+    "recurringEveryMonth": "Cada mes",
+    "givenSoFar": "{{amount}} dados hasta ahora",
+    "cancel": "Detener esta ofrenda mensual",
+    "cancelling": "Deteniendo…",
+    "recurringNote": "Se gestionan con suscripciones de PayPal. También podés pausarlas o cancelarlas desde tu cuenta de PayPal."
   }
 }

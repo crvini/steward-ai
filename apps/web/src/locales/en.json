@@ -299,5 +299,14 @@
     "missingNote": "Money PayPal processed that we never wrote down.",
     "none": "Nothing here.",
     "lagNote": "PayPal Transaction Search can take a few hours to show a fresh capture, so a gift taken minutes ago may appear here until it catches up."
+  },
+  "member": {
+    "needsTitle": "Where the church needs help",
+    "recurringTitle": "Your recurring gifts",
+    "recurringEveryMonth": "Every month",
+    "givenSoFar": "{{amount}} given so far",
+    "cancel": "Stop this monthly gift",
+    "cancelling": "Stopping…",
+    "recurringNote": "Managed through PayPal subscriptions. You can also pause or cancel from your PayPal account."
   }
 }

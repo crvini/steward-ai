@@ -22,6 +22,7 @@ import { ImpactReview } from './ImpactReview';
 import { AiActivity } from './AiActivity';
 import { PastorWeek } from './PastorWeek';
 import { Audit } from './Audit';
+import { MemberSidebar } from './MemberSidebar';
 import { TopBar, TABS_BY_ROLE } from './TopBar';
 import { FundThread } from './FundThread';
 import { Card } from './ui';
@@ -188,24 +189,27 @@ export default function App() {
         {church && <FundStrip church={church} />}
 
         {church && tab === 'give' && (
-          receipt ? (
-            <GiftReceipt
-              receipt={receipt}
-              onGiveAgain={() => {
-                sessionStorage.removeItem(LAST_GIFT_KEY);
-                setReceipt(null);
-              }}
-            />
-          ) : (
-            <GiveCard
-              church={church}
-              user={user}
-              onGiftCaptured={(giftId) => {
-                void showReceipt(giftId);
-                void loadChurch();
-              }}
-            />
-          )
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
+            {receipt ? (
+              <GiftReceipt
+                receipt={receipt}
+                onGiveAgain={() => {
+                  sessionStorage.removeItem(LAST_GIFT_KEY);
+                  setReceipt(null);
+                }}
+              />
+            ) : (
+              <GiveCard
+                church={church}
+                user={user}
+                onGiftCaptured={(giftId) => {
+                  void showReceipt(giftId);
+                  void loadChurch();
+                }}
+              />
+            )}
+            <MemberSidebar church={church} />
+          </div>
         )}
 
         {tab === 'impact' && <MyImpact />}
