@@ -16,6 +16,7 @@ import { GiftReceipt } from './GiftReceipt';
 import { RoleChooser } from './RoleChooser';
 import { DemoBanner } from './DemoBanner';
 import { Distributions } from './Distributions';
+import { LedgerGrid } from './LedgerGrid';
 
 /** Survives a reload so a refreshed receipt is not lost. */
 const LAST_GIFT_KEY = 'steward:lastGiftId';
@@ -222,13 +223,18 @@ export default function App() {
                 />
               )
             ) : (
-              <Distributions church={church} user={user} onChanged={() => void loadChurch()} />
+              <>
+                <Distributions church={church} user={user} onChanged={() => void loadChurch()} />
+                <LedgerGrid locale={i18n.language} />
+              </>
             )}
 
-            <section>
-              <h2 className="mb-3 text-xl font-semibold">{t('table.title')}</h2>
-              <GiftsTable gifts={gifts} />
-            </section>
+            {user.role === 'DONOR' && (
+              <section>
+                <h2 className="mb-3 text-xl font-semibold">{t('table.title')}</h2>
+                <GiftsTable gifts={gifts} />
+              </section>
+            )}
           </>
         )}
       </main>

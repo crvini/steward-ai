@@ -140,5 +140,22 @@
       "EXECUTED": "Pagado",
       "FAILED": "Rechazado"
     }
+  },
+  "grid": {
+    "title": "Libro mayor",
+    "date": "Fecha",
+    "fund": "Fondo",
+    "direction": "Dirección",
+    "party": "De / para",
+    "amount": "Monto",
+    "fee": "Comisión",
+    "net": "Neto",
+    "in": "Recibido",
+    "out": "Repartido",
+    "askPlaceholder": "Preguntá sobre el libro — \"¿Cuánto entró para misiones este mes?\"",
+    "ask": "Preguntar",
+    "asking": "Buscando…",
+    "clear": "Quitar filtro",
+    "filterApplied": "Filtro aplicado a la tabla"
   }
 }

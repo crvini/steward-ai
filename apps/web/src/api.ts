@@ -92,6 +92,28 @@ export type DistributionRow = {
   executedAt: string | null;
 };
 
+export type LedgerRow = {
+  id: string;
+  date: string;
+  fund: string;
+  fundSlug: string;
+  direction: 'IN' | 'OUT';
+  party: string;
+  amount: number;
+  fee: number | null;
+  net: number | null;
+  source: string;
+  reference: string | null;
+};
+
+export type LedgerFilter = {
+  fundSlug?: string;
+  direction?: 'IN' | 'OUT';
+  from?: string;
+  to?: string;
+  minAmountCents?: number;
+};
+
 export type Receipt = {
   id: string;
   donor: string;
@@ -168,6 +190,12 @@ export const api = {
       { method: 'POST' },
     ),
   subscriptions: () => json<{ subscriptions: SubscriptionRow[] }>('/api/subscriptions'),
+  ledger: () => json<{ rows: LedgerRow[] }>('/api/ledger'),
+  askLedger: (question: string) =>
+    json<{ filter: LedgerFilter; answer: string }>('/api/ledger/ask', {
+      method: 'POST',
+      body: JSON.stringify({ question }),
+    }),
   distributions: () => json<{ distributions: DistributionRow[] }>('/api/distributions'),
   distribution: (id: string) =>
     json<DistributionDetail>(`/api/distributions/${encodeURIComponent(id)}`),

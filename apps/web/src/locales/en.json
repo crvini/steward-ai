@@ -140,5 +140,22 @@
       "EXECUTED": "Paid",
       "FAILED": "Rejected"
     }
+  },
+  "grid": {
+    "title": "Ledger",
+    "date": "Date",
+    "fund": "Fund",
+    "direction": "Direction",
+    "party": "From / to",
+    "amount": "Amount",
+    "fee": "PayPal fee",
+    "net": "Net",
+    "in": "Given",
+    "out": "Distributed",
+    "askPlaceholder": "Ask about the ledger — \"How much came in for missions this month?\"",
+    "ask": "Ask",
+    "asking": "Looking…",
+    "clear": "Clear filter",
+    "filterApplied": "Filter applied to the grid"
   }
 }
