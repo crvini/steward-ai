@@ -31,3 +31,9 @@ pnpm-debug.log*
 # Prisma
 prisma/*.db
 prisma/*.db-journal
+
+# Documentos de trabajo internos: estrategia y planificación.
+# El repo es público y estos no son para los jueces.
+docs/PLAN_PARA_GANAR.md
+docs/MEJORAS_INTERFAZ.md
+docs/MEJORAS-UI.md
