@@ -41,7 +41,8 @@
     "PENDING": "Pending",
     "COMPLETED": "Completed",
     "FAILED": "Failed",
-    "CANCELLED": "Cancelled"
+    "CANCELLED": "Cancelled",
+    "ACTIVE": "Active monthly"
   },
   "demo": {
     "banner": "Demo environment · PayPal sandbox · No real money moves",
@@ -240,21 +241,22 @@
     "subtitle": "Every proposal the assistant made and every signature that followed it.",
     "empty": "Nothing yet.",
     "action": {
-      "ai.gift_proposed": "The assistant proposed a gift",
-      "ai.ledger_question": "A question was asked of the books",
-      "ai.impact_drafted": "Impact notes drafted",
-      "distribution.proposed_by_ai": "The assistant proposed a distribution",
-      "distribution.adjusted": "The treasurer adjusted the lines",
-      "distribution.treasurer_approved": "First key: treasurer approved",
-      "distribution.pastor_approved": "Second key: pastor approved",
-      "distribution.rejected": "Distribution rejected",
-      "distribution.executed": "Sent with PayPal Payouts",
-      "impact.approved": "An impact note was approved",
-      "payout.item_succeeded": "A payout reached its recipient",
-      "payout.item_failed": "A payout failed and was reversed",
-      "gift.captured": "A gift was captured",
-      "gift.subscription_activated": "A monthly gift became active",
-      "ai.distribution_revised": "The assistant revised its proposal"
+      "ai_gift_proposed": "The assistant proposed a gift",
+      "ai_ledger_question": "A question was asked of the books",
+      "ai_impact_drafted": "Impact notes drafted",
+      "distribution_proposed_by_ai": "The assistant proposed a distribution",
+      "distribution_adjusted": "The treasurer adjusted the lines",
+      "distribution_treasurer_approved": "First key: treasurer approved",
+      "distribution_pastor_approved": "Second key: pastor approved",
+      "distribution_rejected": "Distribution rejected",
+      "distribution_executed": "Sent with PayPal Payouts",
+      "impact_approved": "An impact note was approved",
+      "payout_item_succeeded": "A payout reached its recipient",
+      "payout_item_failed": "A payout failed and was reversed",
+      "gift_captured": "A gift was captured",
+      "gift_subscription_activated": "A monthly gift became active",
+      "ai_distribution_revised": "The assistant revised its proposal",
+      "ai_brief_written": "The assistant wrote the weekly brief"
     }
   },
   "fund": {

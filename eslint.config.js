@@ -18,6 +18,13 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   prettier,
   {
+    // Los scripts de la raíz corren en Node, no en el navegador.
+    files: ['scripts/**/*.mjs', 'prisma/**/*.ts'],
+    languageOptions: {
+      globals: { console: 'readonly', process: 'readonly', URL: 'readonly' },
+    },
+  },
+  {
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'error',

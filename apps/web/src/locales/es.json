@@ -41,7 +41,8 @@
     "PENDING": "Pendiente",
     "COMPLETED": "Completada",
     "FAILED": "Fallida",
-    "CANCELLED": "Cancelada"
+    "CANCELLED": "Cancelada",
+    "ACTIVE": "Mensual activa"
   },
   "demo": {
     "banner": "Entorno de demostración · Sandbox de PayPal · No se mueve dinero real",
@@ -240,21 +241,22 @@
     "subtitle": "Cada propuesta del asistente y cada firma que vino después.",
     "empty": "Todavía no hay nada.",
     "action": {
-      "ai.gift_proposed": "El asistente propuso una ofrenda",
-      "ai.ledger_question": "Se preguntó al libro mayor",
-      "ai.impact_drafted": "Se redactaron notas de impacto",
-      "distribution.proposed_by_ai": "El asistente propuso un reparto",
-      "distribution.adjusted": "El tesorero ajustó las líneas",
-      "distribution.treasurer_approved": "Primera llave: aprobó el tesorero",
-      "distribution.pastor_approved": "Segunda llave: aprobó el pastor",
-      "distribution.rejected": "Reparto rechazado",
-      "distribution.executed": "Enviado con PayPal Payouts",
-      "impact.approved": "Se aprobó una nota de impacto",
-      "payout.item_succeeded": "Un pago llegó a su destinatario",
-      "payout.item_failed": "Un pago falló y se revirtió",
-      "gift.captured": "Se capturó una ofrenda",
-      "gift.subscription_activated": "Una ofrenda mensual quedó activa",
-      "ai.distribution_revised": "El asistente revisó su propuesta"
+      "ai_gift_proposed": "El asistente propuso una ofrenda",
+      "ai_ledger_question": "Se preguntó al libro mayor",
+      "ai_impact_drafted": "Se redactaron notas de impacto",
+      "distribution_proposed_by_ai": "El asistente propuso un reparto",
+      "distribution_adjusted": "El tesorero ajustó las líneas",
+      "distribution_treasurer_approved": "Primera llave: aprobó el tesorero",
+      "distribution_pastor_approved": "Segunda llave: aprobó el pastor",
+      "distribution_rejected": "Reparto rechazado",
+      "distribution_executed": "Enviado con PayPal Payouts",
+      "impact_approved": "Se aprobó una nota de impacto",
+      "payout_item_succeeded": "Un pago llegó a su destinatario",
+      "payout_item_failed": "Un pago falló y se revirtió",
+      "gift_captured": "Se capturó una ofrenda",
+      "gift_subscription_activated": "Una ofrenda mensual quedó activa",
+      "ai_distribution_revised": "El asistente revisó su propuesta",
+      "ai_brief_written": "El asistente escribió el resumen semanal"
     }
   },
   "fund": {

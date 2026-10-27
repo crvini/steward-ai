@@ -223,7 +223,7 @@ export type GiftRow = {
   amountCents: number;
   currency: string;
   frequency: 'ONE_TIME' | 'MONTHLY';
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  status: 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
   paypalOrderId: string | null;
   createdAt: string;
 };

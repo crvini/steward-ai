@@ -24,6 +24,8 @@ jobs:
 
       - run: pnpm db:generate
 
+      - run: node scripts/auditar-i18n.mjs
+
       - run: pnpm lint
 
       - run: pnpm typecheck

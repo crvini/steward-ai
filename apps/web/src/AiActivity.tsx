@@ -47,7 +47,13 @@ export function AiActivity() {
             </span>
             <span className="flex-1">
               <span className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium">{t(`activity.action.${entry.action}`)}</span>
+                <span className="text-sm font-medium">{
+                    // i18next parte la ruta por puntos, así que una acción
+                    // como "ai.gift_proposed" nunca resolvería; se normaliza.
+                    t(`activity.action.${entry.action.replace(/\./g, '_')}`, {
+                      defaultValue: entry.action,
+                    })
+                  }</span>
                 {entry.byAi ? (
                   <Badge tone="warn">{t('activity.byAi')}</Badge>
                 ) : (

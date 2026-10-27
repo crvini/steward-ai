@@ -7,10 +7,12 @@ import { useTranslation } from 'react-i18next';
 import { formatCents, type GiftRow } from './api';
 
 const STATUS_STYLES: Record<GiftRow['status'], string> = {
-  COMPLETED: 'bg-green-100 text-green-800',
-  PENDING: 'bg-amber-100 text-amber-800',
-  FAILED: 'bg-red-100 text-red-800',
-  CANCELLED: 'bg-neutral-200 text-neutral-700',
+  // Una ofrenda mensual activa no está "completada": sigue cobrándose.
+  ACTIVE: 'bg-fund-tithe/10 text-fund-tithe',
+  COMPLETED: 'bg-fund-benevolence/10 text-fund-benevolence',
+  PENDING: 'bg-gold-500/15 text-navy-900',
+  FAILED: 'bg-fund-missions/10 text-fund-missions',
+  CANCELLED: 'bg-surface-alt text-ink-muted',
 };
 
 export function GiftsTable({ gifts }: { gifts: GiftRow[] }) {
