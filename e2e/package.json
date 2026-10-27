@@ -1,0 +1,15 @@
+{
+  "name": "steward-ai-e2e",
+  "private": true,
+  "scripts": {
+    "test": "playwright test --project=lectura",
+    "test:escritura": "playwright test --project=escritura",
+    "test:todo": "playwright test",
+    "test:headed": "playwright test --project=lectura --headed",
+    "test:prod": "STEWARD_BASE_URL=https://steward.e-ministry.online playwright test --project=lectura",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}
