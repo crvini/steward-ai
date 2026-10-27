@@ -21,6 +21,7 @@ const INTERESTING = [
   'ai.ledger_question',
   'ai.impact_drafted',
   'distribution.proposed_by_ai',
+  'ai.distribution_revised',
   'distribution.adjusted',
   'distribution.treasurer_approved',
   'distribution.pastor_approved',

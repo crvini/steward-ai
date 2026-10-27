@@ -6,6 +6,7 @@ import { Router } from 'express';
 import { TransactionDirection, UserRole } from '@prisma/client';
 
 import { prisma } from '../db/client.js';
+import { env } from '../config/env.js';
 
 export const churchRouter = Router();
 
@@ -37,6 +38,13 @@ churchRouter.get('/church', async (_req, res, next) => {
 
     res.json({
       church: { id: church.id, name: church.name, currency: church.currency },
+      // Los topes reales que aplica el motor de reglas. La interfaz los
+      // muestra tal cual para que nunca afirme un límite distinto del que
+      // el código hace cumplir.
+      limits: {
+        maxPerItemCents: Math.round(env.MAX_PAYOUT_ITEM_USD * 100),
+        maxPerBatchCents: Math.round(env.MAX_PAYOUT_BATCH_USD * 100),
+      },
       funds: funds.map((f) => ({
         id: f.id,
         slug: f.slug,

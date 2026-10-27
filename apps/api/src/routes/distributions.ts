@@ -94,6 +94,19 @@ async function verdictFor(distributionId: string) {
   return { distribution, verdict, balance };
 }
 
+/**
+ * The limits as the engine actually enforces them, so a screen can state the
+ * real number instead of a hardcoded one. Change MAX_PAYOUT_ITEM_USD and the
+ * panel follows; a screen that says $1,500 while the code blocks at $500
+ * would be lying about the guardrail it exists to explain.
+ */
+function limitsForDisplay() {
+  return {
+    maxPerItemCents: LIMITS.maxPerItemCents,
+    maxPerBatchCents: LIMITS.maxPerBatchCents,
+  };
+}
+
 // ── Propose (treasurer) ─────────────────────────────────────────────────────
 
 const proposeSchema = z.object({ fundId: z.string().min(1) });
@@ -243,6 +256,7 @@ distributionsRouter.get(
         treasurerApprovedBy: distribution.treasurerApprovedBy,
         pastorApprovedBy: distribution.pastorApprovedBy,
         paypalBatchId: distribution.paypalBatchId,
+        limits: limitsForDisplay(),
         verdict,
       });
     } catch (error) {
@@ -299,6 +313,99 @@ distributionsRouter.put(
             entity: 'Distribution',
             entityId: distribution.id,
             payload: { lines: parsed.data.lines.length },
+          },
+        }),
+      ]);
+
+      res.json(await verdictFor(distribution.id));
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+/**
+ * "Ask the AI to revise": hand the agent back its own refused proposal and
+ * let it correct itself in words and numbers.
+ *
+ * This is the most honest thing the demo shows — the model proposing, code
+ * refusing, and the model answering for it — so the rejection text comes
+ * straight from the rules engine, not from a prompt we wrote to look good.
+ */
+distributionsRouter.post(
+  '/distributions/:id/revise',
+  requireRole(UserRole.TREASURER),
+  async (req, res, next) => {
+    try {
+      const result = await verdictFor(pathId(req));
+      if (!result) return res.status(404).json({ error: 'distribution_not_found' });
+
+      const { distribution, verdict, balance } = result;
+      if (distribution.status !== DistributionStatus.PROPOSED) {
+        return res.status(409).json({ error: 'already_approved', status: distribution.status });
+      }
+
+      const limit = aiLimiter.check(req.user!.id);
+      if (!limit.allowed) {
+        res.setHeader('Retry-After', String(limit.retryAfterSeconds));
+        return res.status(429).json({ error: 'rate_limited', ...limit });
+      }
+
+      const refusals = [
+        ...verdict.lines
+          .filter((l) => !l.ok)
+          .map((l) => `- ${l.recipientName ?? l.recipientId}: ${l.violations.map((v) => v.detail).join(' ')}`),
+        ...verdict.batchViolations.map((v) => `- ${v.detail}`),
+      ].join('\n');
+
+      const recipients = await prisma.recipient.findMany({
+        where: { fundId: distribution.fundId, active: true },
+      });
+      const briefs = await Promise.all(
+        recipients.map(async (r) => {
+          const last = await prisma.distributionItem.findFirst({
+            where: { recipientId: r.id, status: DistributionItemStatus.SUCCEEDED },
+            orderBy: { createdAt: 'desc' },
+          });
+          return {
+            id: r.id,
+            name: r.name,
+            maxPerPayoutCents: r.maxPerPayoutCents,
+            note: r.note,
+            lastPaidCents: last?.amountCents ?? null,
+            lastPaidAt: last?.createdAt.toISOString().slice(0, 10) ?? null,
+          };
+        }),
+      );
+
+      const plan = await proposeDistribution({
+        fundName: distribution.fund.name,
+        fundBalanceCents: balance,
+        recipients: briefs,
+        limits: LIMITS,
+        correction: refusals || 'The treasurer asked for a different split.',
+      });
+
+      await prisma.$transaction([
+        prisma.distributionItem.deleteMany({ where: { distributionId: distribution.id } }),
+        prisma.distributionItem.createMany({
+          data: plan.lines.map((line) => ({
+            distributionId: distribution.id,
+            recipientId: line.recipientId,
+            amountCents: line.amountCents,
+          })),
+        }),
+        prisma.distribution.update({
+          where: { id: distribution.id },
+          data: { aiRationale: plan.rationale },
+        }),
+        prisma.auditLog.create({
+          data: {
+            actor: req.user!.email,
+            action: 'ai.distribution_revised',
+            entity: 'Distribution',
+            entityId: distribution.id,
+            payload: { refusals, lines: plan.lines.length },
           },
         }),
       ]);

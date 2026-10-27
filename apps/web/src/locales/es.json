@@ -124,8 +124,15 @@
     "empty": "Todavía no hay repartos.",
     "recipients_one": "{{count}} destinatario",
     "recipients_other": "{{count}} destinatarios",
-    "keys": "Tesorero: {{treasurer}} · Pastor: {{pastor}}",
-    "aiSays": "Por qué el asistente propuso esto",
+    "keys": {
+      "title": "Dos llaves antes de que el dinero se mueva",
+      "treasurer": "Aprobación del tesorero",
+      "pastor": "Aprobación del pastor",
+      "sent": "Enviado con PayPal Payouts",
+      "waiting": "Esperando",
+      "onlyAfterBoth": "Solo después de las dos llaves"
+    },
+    "aiSays": "Por qué el asistente propone esto",
     "recipient": "Destinatario",
     "amount": "Monto",
     "rules": "Revisión de reglas",
@@ -148,7 +155,21 @@
       "FAILED": "Rechazado"
     },
     "rulesChecked": "Reglas revisadas en código",
-    "rulesCheckedNote": "La IA no puede cambiarlas ni saltárselas. Las define el pastor."
+    "rulesCheckedNote": "La IA no puede cambiarlas ni saltárselas. Las define el pastor.",
+    "heading": "Repartir {{fund}}",
+    "available": "{{amount}} disponibles en el fondo. Propuesto por el asistente.",
+    "suggestedByAi": "Sugerido por el asistente",
+    "blockedLine": "Bloqueado, no se puede aprobar",
+    "stays": "Se queda en el fondo",
+    "staysNote": "Reserva que no se reparte",
+    "staysNoteBlocked": "{{reserve}} de reserva más los {{blocked}} bloqueados",
+    "noPayment": "Sin pago",
+    "sentThrough": "Enviado por PayPal Payouts",
+    "paymentsInBatch_one": "{{count}} pago en un lote",
+    "paymentsInBatch_other": "{{count}} pagos en un lote",
+    "approvePastorAmount": "Aprobar y enviar {{amount}}",
+    "revise": "Pedirle al asistente que lo revise",
+    "revising": "Revisando…"
   },
   "grid": {
     "title": "Libro mayor",
@@ -212,7 +233,8 @@
       "payout.item_succeeded": "Un pago llegó a su destinatario",
       "payout.item_failed": "Un pago falló y se revirtió",
       "gift.captured": "Se capturó una ofrenda",
-      "gift.subscription_activated": "Una ofrenda mensual quedó activa"
+      "gift.subscription_activated": "Una ofrenda mensual quedó activa",
+      "ai.distribution_revised": "El asistente revisó su propuesta"
     }
   },
   "fund": {
@@ -226,10 +248,10 @@
     "AMOUNT_NOT_POSITIVE": "Todo monto es positivo",
     "AMOUNT_NOT_WHOLE_CENTS": "Todo monto es un número entero de centavos",
     "OVER_RECIPIENT_LIMIT": "Ningún pago supera el tope de su destinatario",
-    "OVER_ITEM_LIMIT": "Ningún pago supera el tope global",
+    "OVER_ITEM_LIMIT": "Ningún pago supera {{item}}",
     "DUPLICATE_RECIPIENT": "Nadie recibe dos veces en el mismo reparto",
     "NO_VALID_LINES": "Hay algo que pagar",
-    "OVER_BATCH_LIMIT": "El reparto completo está bajo el tope del lote",
+    "OVER_BATCH_LIMIT": "El reparto completo está bajo {{batch}}",
     "INSUFFICIENT_FUND_BALANCE": "El fondo tiene saldo suficiente"
   }
 }

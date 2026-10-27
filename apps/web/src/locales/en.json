@@ -124,8 +124,15 @@
     "empty": "No distributions yet.",
     "recipients_one": "{{count}} recipient",
     "recipients_other": "{{count}} recipients",
-    "keys": "Treasurer: {{treasurer}} · Pastor: {{pastor}}",
-    "aiSays": "Why the assistant proposed this",
+    "keys": {
+      "title": "Two keys before money moves",
+      "treasurer": "Treasurer approval",
+      "pastor": "Pastor approval",
+      "sent": "Sent with PayPal Payouts",
+      "waiting": "Waiting",
+      "onlyAfterBoth": "Only after both keys"
+    },
+    "aiSays": "Why the assistant suggests this",
     "recipient": "Recipient",
     "amount": "Amount",
     "rules": "Rules check",
@@ -148,7 +155,21 @@
       "FAILED": "Rejected"
     },
     "rulesChecked": "Rules checked in code",
-    "rulesCheckedNote": "The AI cannot change or skip these. Set by the pastor."
+    "rulesCheckedNote": "The AI cannot change or skip these. Set by the pastor.",
+    "heading": "Distribute {{fund}}",
+    "available": "{{amount}} available in the fund. Proposed by the assistant.",
+    "suggestedByAi": "Suggested by the assistant",
+    "blockedLine": "Blocked, cannot be approved",
+    "stays": "Stays in the fund",
+    "staysNote": "Reserve kept back",
+    "staysNoteBlocked": "{{reserve}} reserve plus the blocked {{blocked}}",
+    "noPayment": "No payment",
+    "sentThrough": "Sent through PayPal Payouts",
+    "paymentsInBatch_one": "{{count}} payment in one batch",
+    "paymentsInBatch_other": "{{count}} payments in one batch",
+    "approvePastorAmount": "Approve and send {{amount}}",
+    "revise": "Ask the assistant to revise",
+    "revising": "Revising…"
   },
   "grid": {
     "title": "Ledger",
@@ -212,7 +233,8 @@
       "payout.item_succeeded": "A payout reached its recipient",
       "payout.item_failed": "A payout failed and was reversed",
       "gift.captured": "A gift was captured",
-      "gift.subscription_activated": "A monthly gift became active"
+      "gift.subscription_activated": "A monthly gift became active",
+      "ai.distribution_revised": "The assistant revised its proposal"
     }
   },
   "fund": {
@@ -226,10 +248,10 @@
     "AMOUNT_NOT_POSITIVE": "Every amount is positive",
     "AMOUNT_NOT_WHOLE_CENTS": "Every amount is a whole number of cents",
     "OVER_RECIPIENT_LIMIT": "No payment is over its recipient's limit",
-    "OVER_ITEM_LIMIT": "No single payment is over the global limit",
+    "OVER_ITEM_LIMIT": "No single payment is over {{item}}",
     "DUPLICATE_RECIPIENT": "Nobody is paid twice in the same distribution",
     "NO_VALID_LINES": "There is something to pay",
-    "OVER_BATCH_LIMIT": "The whole distribution is under the batch limit",
+    "OVER_BATCH_LIMIT": "The whole distribution is under {{batch}}",
     "INSUFFICIENT_FUND_BALANCE": "The fund holds enough money"
   }
 }

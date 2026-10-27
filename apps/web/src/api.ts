@@ -81,6 +81,7 @@ export type DistributionDetail = {
   treasurerApprovedBy: string | null;
   pastorApprovedBy: string | null;
   paypalBatchId: string | null;
+  limits: Limits;
   verdict: RulesVerdict;
 };
 
@@ -166,8 +167,12 @@ export type Receipt = {
   occurredAt: string;
 };
 
+export type Limits = { maxPerItemCents: number; maxPerBatchCents: number };
+
 export type ChurchResponse = {
   church: { id: string; name: string; currency: string };
+  /** Enforced by the rules engine; read, never hardcoded in the UI. */
+  limits: Limits;
   funds: Fund[];
   donors: Donor[];
 };
@@ -267,6 +272,10 @@ export const api = {
       `/api/distributions/${encodeURIComponent(id)}/execute`,
       { method: 'POST' },
     ),
+  reviseDistribution: (id: string) =>
+    json<DistributionDetail>(`/api/distributions/${encodeURIComponent(id)}/revise`, {
+      method: 'POST',
+    }),
   adjustDistribution: (id: string, lines: { recipientId: string; amountCents: number }[]) =>
     json<{ verdict: RulesVerdict }>(`/api/distributions/${encodeURIComponent(id)}/lines`, {
       method: 'PUT',

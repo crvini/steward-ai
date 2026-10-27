@@ -37,7 +37,9 @@ test('el tesorero ve la pantalla de repartos, el donante no', async ({ page }) =
   await cerrarSesion(page);
   await entrarComo(page, PERSONAS.tesorero.nombre);
   await irAPestaña(page, /^repartos$/i);
-  await expect(page.getByRole('heading', { name: /^repartos$/i })).toBeVisible();
+  // El panel de las dos llaves solo existe en esta pantalla, así que es mejor
+  // ancla que el título, que lleva el nombre del fondo.
+  await expect(page.getByRole('heading', { name: /dos llaves antes/i })).toBeVisible();
 
   await cerrarSesion(page);
   await entrarComo(page, PERSONAS.miembro.nombre);
