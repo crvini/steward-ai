@@ -253,5 +253,28 @@
     "NO_VALID_LINES": "There is something to pay",
     "OVER_BATCH_LIMIT": "The whole distribution is under {{batch}}",
     "INSUFFICIENT_FUND_BALANCE": "The fund holds enough money"
+  },
+  "pastor": {
+    "greeting": "Good morning, {{name}}",
+    "write": "Write this week’s brief",
+    "rewrite": "Write a new brief",
+    "writing": "Writing…",
+    "noBrief": "No brief for this week yet.",
+    "writtenBy": "Written by the assistant on {{when}} from this week’s books. Nothing in it moves money.",
+    "monthSoFar": "This month so far",
+    "received": "received",
+    "givers_one": "givers, {{count}} new",
+    "givers_other": "givers, {{count}} new",
+    "monthlyGifts": "monthly gifts",
+    "recurringEach": "recurring each month",
+    "yourRules": "Your rules",
+    "yourRulesNote": "What the rules engine enforces right now.",
+    "approvedRecipients": "Approved recipients",
+    "recipientCount_one": "{{count}} recipient",
+    "recipientCount_other": "{{count}} recipients",
+    "paymentLimits": "Payment limits",
+    "limitValues": "{{item}} per payment, {{batch}} per batch",
+    "whoApproves": "Who approves",
+    "whoApprovesValue": "The treasurer first, you second"
   }
 }

@@ -20,6 +20,7 @@ import { LedgerGrid } from './LedgerGrid';
 import { MyImpact } from './MyImpact';
 import { ImpactReview } from './ImpactReview';
 import { AiActivity } from './AiActivity';
+import { PastorWeek } from './PastorWeek';
 import { TopBar, TABS_BY_ROLE } from './TopBar';
 import { FundThread } from './FundThread';
 import { Card } from './ui';
@@ -215,7 +216,11 @@ export default function App() {
           </section>
         )}
 
-        {church && (tab === 'distributions' || tab === 'approvals' || tab === 'week') && (
+        {church && tab === 'week' && (
+          <PastorWeek user={user} currency={church.church.currency} />
+        )}
+
+        {church && (tab === 'distributions' || tab === 'approvals') && (
           <Distributions church={church} user={user} onChanged={() => void loadChurch()} />
         )}
 

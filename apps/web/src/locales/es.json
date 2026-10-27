@@ -253,5 +253,28 @@
     "NO_VALID_LINES": "Hay algo que pagar",
     "OVER_BATCH_LIMIT": "El reparto completo está bajo {{batch}}",
     "INSUFFICIENT_FUND_BALANCE": "El fondo tiene saldo suficiente"
+  },
+  "pastor": {
+    "greeting": "Buenos días, {{name}}",
+    "write": "Escribir el resumen de la semana",
+    "rewrite": "Escribir un resumen nuevo",
+    "writing": "Escribiendo…",
+    "noBrief": "Todavía no hay resumen de esta semana.",
+    "writtenBy": "Escrito por el asistente el {{when}} a partir de los libros de esta semana. Nada de esto mueve dinero.",
+    "monthSoFar": "Este mes hasta ahora",
+    "received": "recibido",
+    "givers_one": "donantes, {{count}} nuevo",
+    "givers_other": "donantes, {{count}} nuevos",
+    "monthlyGifts": "ofrendas mensuales",
+    "recurringEach": "recurrente cada mes",
+    "yourRules": "Tus reglas",
+    "yourRulesNote": "Lo que el motor de reglas hace cumplir ahora mismo.",
+    "approvedRecipients": "Destinatarios aprobados",
+    "recipientCount_one": "{{count}} destinatario",
+    "recipientCount_other": "{{count}} destinatarios",
+    "paymentLimits": "Topes de pago",
+    "limitValues": "{{item}} por pago, {{batch}} por lote",
+    "whoApproves": "Quién aprueba",
+    "whoApprovesValue": "Primero el tesorero, después vos"
   }
 }

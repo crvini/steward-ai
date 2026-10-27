@@ -151,6 +151,21 @@ export type ActivityEntry = {
   payload: unknown;
 };
 
+export type MonthStats = {
+  receivedCents: number;
+  giftCount: number;
+  givers: number;
+  newGivers: number;
+  monthlyGifts: number;
+  recurringMonthlyCents: number;
+  funds: { id: string; slug: string; name: string; goalCents: number | null; balanceCents: number }[];
+  unconfirmed: { count: number; cents: number };
+  limits: Limits;
+  approvedRecipients: number;
+};
+
+export type WeeklyBrief = { body: string; weekOf: string; writtenAt: string };
+
 export type Receipt = {
   id: string;
   donor: string;
@@ -232,6 +247,9 @@ export const api = {
     ),
   subscriptions: () => json<{ subscriptions: SubscriptionRow[] }>('/api/subscriptions'),
   activity: () => json<{ entries: ActivityEntry[] }>('/api/activity'),
+  stats: () => json<MonthStats>('/api/stats'),
+  brief: () => json<{ brief: WeeklyBrief | null }>('/api/brief'),
+  writeBrief: () => json<{ brief: WeeklyBrief }>('/api/brief', { method: 'POST' }),
   ledger: () => json<{ rows: LedgerRow[] }>('/api/ledger'),
   draftImpact: (distributionId: string) =>
     json<{ drafted: number }>(`/api/impact/${encodeURIComponent(distributionId)}/draft`, {
@@ -368,3 +386,17 @@ export async function* streamGivingAgent(
 
 export const formatCents = (cents: number, currency = 'USD', locale = 'en-US') =>
   (cents / 100).toLocaleString(locale, { style: 'currency', currency });
+
+/**
+ * Same amount without cents, for the at-a-glance tiles.
+ *
+ * A stat someone reads in half a second does not need two decimals, and in
+ * Spanish "2.070,00 US$" is wide enough to get truncated in a narrow column —
+ * which loses more information than dropping the cents does.
+ */
+export const formatCentsShort = (cents: number, currency = 'USD', locale = 'en-US') =>
+  (cents / 100).toLocaleString(locale, {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+  });

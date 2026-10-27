@@ -318,6 +318,24 @@ model ImpactUpdate {
   @@index([status])
 }
 
+/// The pastor's weekly brief, written by the AI from that week's books.
+///
+/// Stored rather than generated on every visit: it is the same text until
+/// the week changes, and regenerating it on each page load would spend
+/// tokens to produce the same paragraph.
+model WeeklyBrief {
+  id        String   @id @default(cuid())
+  churchId  String
+  /// Monday of the week it covers, so one brief per week per church.
+  weekOf    DateTime
+  body      String
+  /// What it was written from, for anyone who wants to check it.
+  facts     Json?
+  createdAt DateTime @default(now())
+
+  @@unique([churchId, weekOf])
+}
+
 /// Every proposal, approval, rejection and execution, with who and when (spec §5).
 model AuditLog {
   id        String   @id @default(cuid())
