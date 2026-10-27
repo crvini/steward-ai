@@ -216,6 +216,29 @@ export function Distributions({
             </tbody>
           </table>
 
+          {/* Todas las reglas, no solo las que fallaron: enseñar únicamente
+              los fallos deja al lector adivinando qué más se revisó. */}
+          <div className="mt-4 rounded-xl border border-line bg-surface-alt p-4">
+            <p className="text-sm font-semibold">{t('dist.rulesChecked')}</p>
+            <p className="mt-0.5 text-xs text-ink-muted">{t('dist.rulesCheckedNote')}</p>
+            <ul className="mt-3 flex flex-col gap-1.5">
+              {detail.verdict.checks.map((check) => (
+                <li key={check.code} className="flex items-start gap-2 text-sm">
+                  <span
+                    aria-hidden
+                    className={check.passed ? 'text-fund-benevolence' : 'text-fund-missions'}
+                  >
+                    {check.passed ? '✓' : '✕'}
+                  </span>
+                  <span className={check.passed ? 'text-ink-muted' : 'text-fund-missions'}>
+                    {t(`rule.${check.code}`, { defaultValue: check.label })}
+                    {check.detail ? ` — ${check.detail}` : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {detail.verdict.batchViolations.length > 0 && (
             <ul className="mt-3 list-disc rounded-lg bg-red-50 p-3 pl-8 text-sm text-red-800">
               {detail.verdict.batchViolations.map((v) => (

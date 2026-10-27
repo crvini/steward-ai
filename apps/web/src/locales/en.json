@@ -146,7 +146,9 @@
       "APPROVED": "Both signed",
       "EXECUTED": "Paid",
       "FAILED": "Rejected"
-    }
+    },
+    "rulesChecked": "Rules checked in code",
+    "rulesCheckedNote": "The AI cannot change or skip these. Set by the pastor."
   },
   "grid": {
     "title": "Ledger",
@@ -212,5 +214,18 @@
   "fund": {
     "ofGoal": "{{percent}}% of the {{goal}} goal",
     "readyToDistribute": "Ready to distribute"
+  },
+  "rule": {
+    "RECIPIENT_UNKNOWN": "Every recipient is on the approved list",
+    "RECIPIENT_INACTIVE": "Every recipient is currently active",
+    "RECIPIENT_WRONG_FUND": "Every recipient receives from this fund",
+    "AMOUNT_NOT_POSITIVE": "Every amount is positive",
+    "AMOUNT_NOT_WHOLE_CENTS": "Every amount is a whole number of cents",
+    "OVER_RECIPIENT_LIMIT": "No payment is over its recipient's limit",
+    "OVER_ITEM_LIMIT": "No single payment is over the global limit",
+    "DUPLICATE_RECIPIENT": "Nobody is paid twice in the same distribution",
+    "NO_VALID_LINES": "There is something to pay",
+    "OVER_BATCH_LIMIT": "The whole distribution is under the batch limit",
+    "INSUFFICIENT_FUND_BALANCE": "The fund holds enough money"
   }
 }

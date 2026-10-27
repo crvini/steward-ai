@@ -51,9 +51,18 @@ export type CheckedLine = {
   violations: RuleViolation[];
 };
 
+export type RuleOutcome = {
+  code: string;
+  label: string;
+  passed: boolean;
+  detail?: string;
+};
+
 export type RulesVerdict = {
   lines: CheckedLine[];
   batchViolations: RuleViolation[];
+  /** Every rule evaluated, passed or not. */
+  checks: RuleOutcome[];
   payableCents: number;
   executable: boolean;
 };

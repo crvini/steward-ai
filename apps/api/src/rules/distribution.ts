@@ -54,14 +54,51 @@ export type CheckedLine = {
   violations: { code: RuleCode; detail: string }[];
 };
 
+/**
+ * One rule and how it came out across the whole distribution.
+ *
+ * The design asks the treasurer's screen to show every rule that was checked,
+ * not only the ones that failed. Showing only failures leaves the reader
+ * guessing what else was looked at — and "what else did it check?" is exactly
+ * the question a guardrail has to answer out loud.
+ */
+export type RuleOutcome = {
+  code: RuleCode | BatchRuleCode;
+  /** What the rule says, in plain words, regardless of the outcome. */
+  label: string;
+  passed: boolean;
+  /** Set when it failed. */
+  detail?: string;
+};
+
 export type RulesVerdict = {
   lines: CheckedLine[];
   /** Problems with the batch as a whole, not with one line. */
   batchViolations: { code: BatchRuleCode; detail: string }[];
+  /** Every rule evaluated, passed or not, in reading order. */
+  checks: RuleOutcome[];
   /** Sum of the lines that passed. */
   payableCents: number;
   /** True only when every line passes and the batch passes. */
   executable: boolean;
+};
+
+/**
+ * Every rule this engine knows, with the words the screen shows. Kept as one
+ * list so a rule cannot be enforced without also being reportable.
+ */
+const RULE_LABELS: Record<RuleCode | BatchRuleCode, string> = {
+  RECIPIENT_UNKNOWN: 'Every recipient is on the approved list',
+  RECIPIENT_INACTIVE: 'Every recipient is currently active',
+  RECIPIENT_WRONG_FUND: 'Every recipient receives from this fund',
+  AMOUNT_NOT_POSITIVE: 'Every amount is positive',
+  AMOUNT_NOT_WHOLE_CENTS: 'Every amount is a whole number of cents',
+  OVER_RECIPIENT_LIMIT: "No payment is over its recipient's limit",
+  OVER_ITEM_LIMIT: 'No single payment is over the global limit',
+  DUPLICATE_RECIPIENT: 'Nobody is paid twice in the same distribution',
+  NO_VALID_LINES: 'There is something to pay',
+  OVER_BATCH_LIMIT: 'The whole distribution is under the batch limit',
+  INSUFFICIENT_FUND_BALANCE: 'The fund holds enough money',
 };
 
 const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
@@ -184,9 +221,31 @@ export function checkDistribution(options: {
     });
   }
 
+  // Every rule, in the order the screen reads them, with the first failure
+  // as the explanation. A rule with no failure is reported as passed.
+  const failures = new Map<string, string>();
+  for (const line of checked) {
+    for (const violation of line.violations) {
+      if (!failures.has(violation.code)) failures.set(violation.code, violation.detail);
+    }
+  }
+  for (const violation of batchViolations) {
+    if (!failures.has(violation.code)) failures.set(violation.code, violation.detail);
+  }
+
+  const checks: RuleOutcome[] = (
+    Object.keys(RULE_LABELS) as (RuleCode | BatchRuleCode)[]
+  ).map((code) => {
+    const detail = failures.get(code);
+    return detail === undefined
+      ? { code, label: RULE_LABELS[code], passed: true }
+      : { code, label: RULE_LABELS[code], passed: false, detail };
+  });
+
   return {
     lines: checked,
     batchViolations,
+    checks,
     payableCents,
     // Every line must pass. A distribution that is "mostly fine" is not
     // something to execute: the treasurer removes the bad line first.

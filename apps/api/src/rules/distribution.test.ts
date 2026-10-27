@@ -200,3 +200,45 @@ describe('lo que el tesorero tiene que poder ver', () => {
     expect(violacion?.detail).toMatch(/\$350\.00/);
   });
 });
+
+describe('reporte de todas las reglas', () => {
+  it('siempre informa cada regla, pase o falle', () => {
+    const v = revisar([{ recipientId: 'r-ruiz', amountCents: 30_000 }]);
+
+    // Mostrar sólo los fallos deja al lector adivinando qué más se revisó, y
+    // "¿qué más revisaste?" es justo lo que un guardarraíl debe contestar.
+    expect(v.checks.length).toBeGreaterThanOrEqual(11);
+    expect(v.checks.every((c) => c.passed)).toBe(true);
+    expect(v.checks.every((c) => c.label.length > 0)).toBe(true);
+  });
+
+  it('marca la regla que falló y deja el resto en pasa', () => {
+    const v = revisar([{ recipientId: 'r-otro-fondo', amountCents: 10_000 }]);
+
+    const fondo = v.checks.find((c) => c.code === 'RECIPIENT_WRONG_FUND');
+    expect(fondo?.passed).toBe(false);
+    expect(fondo?.detail).toContain('Building Contractor');
+
+    const duplicado = v.checks.find((c) => c.code === 'DUPLICATE_RECIPIENT');
+    expect(duplicado?.passed).toBe(true);
+    expect(duplicado?.detail).toBeUndefined();
+  });
+
+  it('informa también las reglas del lote, no solo las de línea', () => {
+    const v = revisar([{ recipientId: 'r-ruiz', amountCents: 30_000 }], 20_000);
+
+    const saldo = v.checks.find((c) => c.code === 'INSUFFICIENT_FUND_BALANCE');
+    expect(saldo?.passed).toBe(false);
+    expect(saldo?.detail).toMatch(/\$200\.00/);
+  });
+
+  it('el conteo de reglas no cambia según el resultado', () => {
+    const bien = revisar([{ recipientId: 'r-ruiz', amountCents: 30_000 }]);
+    const mal = revisar([{ recipientId: 'r-inactivo', amountCents: 999_999 }]);
+
+    // Si la lista encogiera cuando todo pasa, la pantalla mostraría menos
+    // reglas en el caso bueno, que es justo cuando hay que demostrar
+    // cuántas se revisaron.
+    expect(mal.checks.length).toBe(bien.checks.length);
+  });
+});
