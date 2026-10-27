@@ -21,6 +21,7 @@ import { MyImpact } from './MyImpact';
 import { ImpactReview } from './ImpactReview';
 import { AiActivity } from './AiActivity';
 import { PastorWeek } from './PastorWeek';
+import { Audit } from './Audit';
 import { TopBar, TABS_BY_ROLE } from './TopBar';
 import { FundThread } from './FundThread';
 import { Card } from './ui';
@@ -227,6 +228,8 @@ export default function App() {
         {tab === 'impactDrafts' && <ImpactReview distributions={distributions} />}
 
         {tab === 'books' && <LedgerGrid locale={i18n.language} />}
+
+        {church && tab === 'audit' && <Audit currency={church.church.currency} />}
 
         {tab === 'aiActivity' && <AiActivity />}
       </main>

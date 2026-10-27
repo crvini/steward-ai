@@ -31,7 +31,7 @@ test('los topes que muestra el pastor son los que el motor aplica', async ({ pag
   // La pantalla no puede afirmar un tope distinto del que el código hace
   // cumplir, así que se compara contra lo que el servidor reporta.
   const panel = page.locator('section', { hasText: /tus reglas/i }).last();
-  const texto = (await panel.innerText()).replace(/ /g, ' ');
+  const texto = (await panel.innerText()).replace(/ /g, ' ');
   const porPago = (stats.limits.maxPerItemCents / 100).toLocaleString('es', {
     minimumFractionDigits: 2,
   });

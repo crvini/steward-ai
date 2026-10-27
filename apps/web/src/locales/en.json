@@ -190,7 +190,15 @@
     "type": "Type",
     "status": "Status",
     "confirmed": "Confirmed",
-    "notInPayPal": "Not in PayPal"
+    "notInPayPal": "Not in PayPal",
+    "chipFund": "Fund is {{fund}}",
+    "chipIn": "Money in",
+    "chipOut": "Money out",
+    "chipDates": "{{from}} to {{to}}",
+    "chipMin": "At least ${{amount}}",
+    "exportCsv": "Export CSV",
+    "auditorFound_one": "The auditor found {{count}} difference with PayPal",
+    "auditorFound_other": "The auditor found {{count}} differences with PayPal"
   },
   "impact": {
     "mine": "What your giving did",
@@ -211,7 +219,8 @@
     "impactDrafts": "Impact drafts",
     "aiActivity": "AI activity",
     "week": "This week",
-    "approvals": "Approvals"
+    "approvals": "Approvals",
+    "audit": "Audit"
   },
   "activity": {
     "title": "AI activity",
@@ -276,5 +285,19 @@
     "limitValues": "{{item}} per payment, {{batch}} per batch",
     "whoApproves": "Who approves",
     "whoApprovesValue": "The treasurer first, you second"
+  },
+  "audit": {
+    "title": "Audit against PayPal",
+    "loading": "Asking PayPal…",
+    "window": "Last {{days}} days · {{paypal}} transactions at PayPal, {{local}} in our books",
+    "inSync": "In sync",
+    "differences_one": "{{count}} difference",
+    "differences_other": "{{count}} differences",
+    "unconfirmedTitle": "In our books, not confirmed by PayPal",
+    "unconfirmedNote": "Recorded by hand, or a capture that never arrived. Someone has to chase these.",
+    "missingTitle": "At PayPal, missing from our books",
+    "missingNote": "Money PayPal processed that we never wrote down.",
+    "none": "Nothing here.",
+    "lagNote": "PayPal Transaction Search can take a few hours to show a fresh capture, so a gift taken minutes ago may appear here until it catches up."
   }
 }

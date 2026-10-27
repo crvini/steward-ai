@@ -39,12 +39,39 @@ reconcileRouter.get('/paypal/reconcile', async (req, res, next) => {
     const localRefs = new Set(local.map((t) => t.paypalRef).filter(Boolean));
     const missingLocally = remote.filter((t) => !localRefs.has(t.transactionId));
 
+    // The other direction: rows the book claims that PayPal cannot confirm.
+    // A null reference means no capture ever arrived — recorded by hand, or
+    // a capture that was lost. It is the difference a treasurer must chase.
+    const unconfirmedRows = await prisma.transaction.findMany({
+      where: {
+        direction: TransactionDirection.IN,
+        paypalRef: null,
+        occurredAt: { gte: start, lte: end },
+      },
+      include: {
+        fund: { select: { name: true } },
+        gift: { select: { donor: { select: { name: true } } } },
+      },
+      orderBy: { occurredAt: 'desc' },
+    });
+
+    const unconfirmedLocally = unconfirmedRows.map((t) => ({
+      id: t.id,
+      date: t.occurredAt.toISOString().slice(0, 10),
+      fund: t.fund.name,
+      party: t.gift?.donor.name ?? '—',
+      amountCents: t.amountCents,
+      description: t.description,
+    }));
+
     res.json({
       window: { start: start.toISOString(), end: end.toISOString(), days: parsed.data.days },
       paypalCount: remote.length,
       localCount: local.length,
       missingLocally,
-      inSync: missingLocally.length === 0,
+      unconfirmedLocally,
+      differences: missingLocally.length + unconfirmedLocally.length,
+      inSync: missingLocally.length === 0 && unconfirmedLocally.length === 0,
     });
   } catch (error) {
     next(error);

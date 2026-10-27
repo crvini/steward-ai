@@ -190,7 +190,15 @@
     "type": "Tipo",
     "status": "Estado",
     "confirmed": "Confirmada",
-    "notInPayPal": "No está en PayPal"
+    "notInPayPal": "No está en PayPal",
+    "chipFund": "Fondo: {{fund}}",
+    "chipIn": "Dinero que entró",
+    "chipOut": "Dinero que salió",
+    "chipDates": "Del {{from}} al {{to}}",
+    "chipMin": "Desde ${{amount}}",
+    "exportCsv": "Exportar CSV",
+    "auditorFound_one": "El auditor encontró {{count}} diferencia con PayPal",
+    "auditorFound_other": "El auditor encontró {{count}} diferencias con PayPal"
   },
   "impact": {
     "mine": "Lo que logró tu ofrenda",
@@ -211,7 +219,8 @@
     "impactDrafts": "Borradores",
     "aiActivity": "Actividad de la IA",
     "week": "Esta semana",
-    "approvals": "Aprobaciones"
+    "approvals": "Aprobaciones",
+    "audit": "Auditoría"
   },
   "activity": {
     "title": "Actividad de la IA",
@@ -276,5 +285,19 @@
     "limitValues": "{{item}} por pago, {{batch}} por lote",
     "whoApproves": "Quién aprueba",
     "whoApprovesValue": "Primero el tesorero, después vos"
+  },
+  "audit": {
+    "title": "Auditoría contra PayPal",
+    "loading": "Preguntándole a PayPal…",
+    "window": "Últimos {{days}} días · {{paypal}} transacciones en PayPal, {{local}} en nuestros libros",
+    "inSync": "Cuadra",
+    "differences_one": "{{count}} diferencia",
+    "differences_other": "{{count}} diferencias",
+    "unconfirmedTitle": "En nuestros libros, sin confirmar por PayPal",
+    "unconfirmedNote": "Registrado a mano, o una captura que nunca llegó. Alguien tiene que averiguarlo.",
+    "missingTitle": "En PayPal, pero no en nuestros libros",
+    "missingNote": "Dinero que PayPal procesó y nosotros nunca anotamos.",
+    "none": "Nada por acá.",
+    "lagNote": "Transaction Search de PayPal puede tardar horas en mostrar una captura reciente, así que una ofrenda de hace minutos puede aparecer acá hasta que se ponga al día."
   }
 }

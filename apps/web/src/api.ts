@@ -166,6 +166,29 @@ export type MonthStats = {
 
 export type WeeklyBrief = { body: string; weekOf: string; writtenAt: string };
 
+export type Reconciliation = {
+  window: { start: string; end: string; days: number };
+  paypalCount: number;
+  localCount: number;
+  missingLocally: {
+    transactionId: string;
+    status: string | null;
+    occurredAt: string | null;
+    value: string | null;
+    currency: string | null;
+  }[];
+  unconfirmedLocally: {
+    id: string;
+    date: string;
+    fund: string;
+    party: string;
+    amountCents: number;
+    description: string | null;
+  }[];
+  differences: number;
+  inSync: boolean;
+};
+
 export type Receipt = {
   id: string;
   donor: string;
@@ -248,6 +271,7 @@ export const api = {
   subscriptions: () => json<{ subscriptions: SubscriptionRow[] }>('/api/subscriptions'),
   activity: () => json<{ entries: ActivityEntry[] }>('/api/activity'),
   stats: () => json<MonthStats>('/api/stats'),
+  reconcile: (days = 30) => json<Reconciliation>(`/api/paypal/reconcile?days=${days}`),
   brief: () => json<{ brief: WeeklyBrief | null }>('/api/brief'),
   writeBrief: () => json<{ brief: WeeklyBrief }>('/api/brief', { method: 'POST' }),
   ledger: () => json<{ rows: LedgerRow[] }>('/api/ledger'),

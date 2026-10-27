@@ -15,8 +15,8 @@ export type Tab = { id: string; label: string };
 
 export const TABS_BY_ROLE: Record<Role, string[]> = {
   DONOR: ['give', 'impact', 'gifts'],
-  TREASURER: ['books', 'distributions', 'impactDrafts', 'aiActivity'],
-  PASTOR: ['week', 'approvals', 'aiActivity'],
+  TREASURER: ['books', 'distributions', 'audit', 'impactDrafts', 'aiActivity'],
+  PASTOR: ['week', 'approvals', 'audit', 'aiActivity'],
 };
 
 export function TopBar({

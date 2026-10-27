@@ -24,6 +24,7 @@ import {
 import { AgGridReact } from 'ag-grid-react';
 
 import { api, type LedgerFilter, type LedgerRow } from './api';
+import { Badge, Button } from './ui';
 
 // Only the features this grid uses. AG Grid v33 is modular; importing the
 // everything-bundle would roughly triple the download for no benefit.
@@ -70,6 +71,10 @@ export function LedgerGrid({ locale }: { locale: string }) {
   const [asking, setAsking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const gridApi = useRef<GridApi<LedgerRow> | null>(null);
+
+  // Lo que el libro afirma y PayPal no confirma. Es lo primero que un
+  // tesorero debería ver al abrir la pantalla, así que va en la cabecera.
+  const unconfirmed = rows.filter((r) => r.direction === 'IN' && !r.inPayPal).length;
 
   useEffect(() => {
     void (async () => {
@@ -132,8 +137,12 @@ export function LedgerGrid({ locale }: { locale: string }) {
       {
         field: 'inPayPal',
         headerName: t('grid.status'),
-        width: 150,
-        valueFormatter: ({ value }) => t(value ? 'grid.confirmed' : 'grid.notInPayPal'),
+        width: 160,
+        // Sin esto AG Grid trata el booleano como casilla y pinta un icono
+        // sin texto, que no dice nada al que revisa.
+        cellDataType: 'text',
+        valueGetter: ({ data }) =>
+          data ? t(data.inPayPal ? 'grid.confirmed' : 'grid.notInPayPal') : '',
       },
     ],
     [t, money],
@@ -196,6 +205,53 @@ export function LedgerGrid({ locale }: { locale: string }) {
     }
   };
 
+  /** The agent's filter, written the way a person would read it. */
+  const chips = (() => {
+    if (!filter) return [] as string[];
+    const out: string[] = [];
+    if (filter.fundSlug) out.push(t('grid.chipFund', { fund: filter.fundSlug }));
+    if (filter.direction)
+      out.push(t(filter.direction === 'IN' ? 'grid.chipIn' : 'grid.chipOut'));
+    if (filter.from || filter.to)
+      out.push(t('grid.chipDates', { from: filter.from ?? '…', to: filter.to ?? '…' }));
+    if (filter.minAmountCents !== undefined)
+      out.push(t('grid.chipMin', { amount: (filter.minAmountCents / 100).toFixed(0) }));
+    return out;
+  })();
+
+  /** CSV of what is on screen, so a treasurer can take it to a spreadsheet. */
+  const exportCsv = () => {
+    const api_ = gridApi.current;
+    if (!api_) return;
+
+    const visible: LedgerRow[] = [];
+    api_.forEachNodeAfterFilterAndSort((node) => {
+      if (node.data) visible.push(node.data);
+    });
+
+    const head = ['date', 'fund', 'direction', 'party', 'type', 'amount', 'fee', 'net', 'reference'];
+    const escape = (v: unknown) => {
+      const s = v === null || v === undefined ? '' : String(v);
+      // Comas y comillas rompen el CSV si no se escapan.
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [
+      head.join(','),
+      ...visible.map((r) =>
+        [r.date, r.fund, r.direction, r.party, r.type ?? '', r.amount, r.fee ?? '', r.net ?? '', r.reference ?? '']
+          .map(escape)
+          .join(','),
+      ),
+    ].join('\n');
+
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `steward-ledger-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const clear = () => {
     setFilter(null);
     setAnswer(null);
@@ -204,8 +260,16 @@ export function LedgerGrid({ locale }: { locale: string }) {
   };
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-xl font-semibold">{t('grid.title')}</h2>
+    <section className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-display text-xl font-bold">{t('grid.title')}</h2>
+        <div className="flex items-center gap-2">
+          {unconfirmed > 0 && (
+            <Badge tone="warn">{t('grid.auditorFound', { count: unconfirmed })}</Badge>
+          )}
+          <Button onClick={exportCsv}>{t('grid.exportCsv')}</Button>
+        </div>
+      </div>
 
       <form
         onSubmit={(e) => {
@@ -243,16 +307,26 @@ export function LedgerGrid({ locale }: { locale: string }) {
       {error && <p className="text-sm text-red-700">{error}</p>}
 
       {answer && (
-        <div className="rounded-lg bg-blue-50 p-3">
-          <p className="text-sm text-blue-900">{answer}</p>
-          {filter && Object.values(filter).some(Boolean) && (
-            <p className="mt-1 text-xs text-blue-700">
-              {t('grid.filterApplied')}:{' '}
-              {Object.entries(filter)
-                .filter(([, v]) => v !== undefined && v !== null)
-                .map(([k, v]) => `${k}=${String(v)}`)
-                .join(' · ')}
-            </p>
+        <div className="rounded-xl bg-navy-900 p-4 text-white">
+          <p className="text-sm leading-relaxed">{answer}</p>
+          {filter && chips.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {chips.map((chip) => (
+                <span
+                  key={chip}
+                  className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/90"
+                >
+                  {chip}
+                </span>
+              ))}
+              <button
+                type="button"
+                onClick={clear}
+                className="rounded-full px-3 py-1 text-xs font-semibold text-white underline"
+              >
+                {t('grid.clear')}
+              </button>
+            </div>
           )}
         </div>
       )}
