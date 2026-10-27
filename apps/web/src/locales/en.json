@@ -2,5 +2,32 @@
   "app": {
     "name": "Steward AI",
     "tagline": "Generosity with transparency — from the moment someone gives to the moment they see the fruit."
+  },
+  "give": {
+    "title": "Give to a fund",
+    "subtitle": "Pick a fund and an amount. Checkout runs on PayPal; the order is created and captured on our server.",
+    "donor": "Giving as",
+    "fund": "Fund",
+    "amount": "Amount (USD)",
+    "loadingSdk": "Loading PayPal…",
+    "ineligible": "PayPal is not available for this currency right now.",
+    "captured": "Gift captured. PayPal reference: {{id}}",
+    "cancelled": "Checkout cancelled. Nothing was charged.",
+    "failed": "Something went wrong: {{message}}"
+  },
+  "table": {
+    "title": "Recent gifts",
+    "empty": "No gifts yet.",
+    "date": "Date",
+    "donor": "Donor",
+    "fund": "Fund",
+    "amount": "Amount",
+    "status": "Status"
+  },
+  "status": {
+    "PENDING": "Pending",
+    "COMPLETED": "Completed",
+    "FAILED": "Failed",
+    "CANCELLED": "Cancelled"
   }
 }

@@ -3,9 +3,9 @@ services:
     image: postgres:16-alpine
     container_name: steward-ai-db
     restart: unless-stopped
-    # Port 5433 on the host so it does not collide with a local PostgreSQL on 5432.
+    # Port 5433 on the host so it is free: 5432 is the local PostgreSQL and 5433 is already taken.
     ports:
-      - '5433:5432'
+      - '5434:5432'
     environment:
       POSTGRES_USER: steward
       POSTGRES_PASSWORD: steward

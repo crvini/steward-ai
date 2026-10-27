@@ -1,5 +1,12 @@
+import { fileURLToPath } from 'node:url';
+
 import { z } from 'zod';
-import 'dotenv/config';
+import dotenv from 'dotenv';
+
+// The workspace keeps a single .env at the repo root, four levels up from both
+// src/config/ and the built dist/config/. Loaded explicitly so the API behaves
+// the same whatever directory it is started from.
+dotenv.config({ path: fileURLToPath(new URL('../../../../.env', import.meta.url)) });
 
 /**
  * Environment is validated once at boot. Never log the parsed values — only
@@ -15,8 +22,8 @@ const envSchema = z.object({
   PAYPAL_WEBHOOK_ID: z.string().optional(),
 
   ANTHROPIC_API_KEY: z.string().min(1),
-  ANTHROPIC_MODEL_MAIN: z.string().default('claude-sonnet-5'),
-  ANTHROPIC_MODEL_FAST: z.string().default('claude-haiku-4-5-20251001'),
+  ANTHROPIC_MODEL_MAIN: z.string().default('claude-sonnet-5-5'),
+  ANTHROPIC_MODEL_FAST: z.string().default('claude-haiku-5-5'),
 
   DATABASE_URL: z.string().min(1),
   API_URL: z.string().url().default('http://localhost:4000'),

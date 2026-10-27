@@ -1,0 +1,303 @@
+// Steward AI data model.
+//
+// Money rule: every amount is stored as an integer number of USD cents
+// (`amountCents`). Nothing in this schema is a float — a donation must never be
+// rounded by a binary fraction. Conversion to and from dollars happens at the
+// edges (PayPal sends decimal strings, the UI formats for display).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  DONOR
+  TREASURER
+  PASTOR
+}
+
+/// Keeps fund identity stable across translations: the display name is
+/// localized, the slug is not.
+enum FundSlug {
+  GENERAL
+  MISSIONS
+  BENEVOLENCE
+  BUILDING
+}
+
+enum GiftFrequency {
+  ONE_TIME
+  MONTHLY
+}
+
+enum GiftStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum TransactionDirection {
+  IN
+  OUT
+}
+
+enum DistributionStatus {
+  PROPOSED
+  TREASURER_APPROVED
+  APPROVED
+  EXECUTED
+  FAILED
+}
+
+enum DistributionItemStatus {
+  PENDING
+  BLOCKED_BY_RULE
+  SENT
+  SUCCEEDED
+  FAILED
+}
+
+enum ImpactUpdateStatus {
+  DRAFT
+  APPROVED
+  SENT
+}
+
+// ---------------------------------------------------------------------------
+// Core
+// ---------------------------------------------------------------------------
+
+/// The demo runs a single church, but every row is scoped to one so the model is
+/// already multi-tenant shaped (spec §3, "out of scope").
+model Church {
+  id        String   @id @default(cuid())
+  name      String
+  currency  String   @default("USD")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users      User[]
+  funds      Fund[]
+  recipients Recipient[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  churchId  String
+  name      String
+  email     String
+  role      UserRole
+  locale    String   @default("en")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  church        Church         @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  gifts         Gift[]
+  impactUpdates ImpactUpdate[]
+
+  @@unique([churchId, email])
+  @@index([churchId, role])
+}
+
+model Fund {
+  id          String   @id @default(cuid())
+  churchId    String
+  slug        FundSlug
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  church        Church         @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  gifts         Gift[]
+  transactions  Transaction[]
+  recipients    Recipient[]
+  distributions Distribution[]
+
+  @@unique([churchId, slug])
+}
+
+model Gift {
+  id          String        @id @default(cuid())
+  donorId     String
+  fundId      String
+  amountCents Int
+  currency    String        @default("USD")
+  frequency   GiftFrequency
+  status      GiftStatus    @default(PENDING)
+
+  paypalOrderId        String? @unique
+  paypalSubscriptionId String? @unique
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  donor        User          @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  fund         Fund          @relation(fields: [fundId], references: [id], onDelete: Restrict)
+  transactions Transaction[]
+
+  @@index([fundId, status])
+  @@index([donorId])
+}
+
+/// One line of the church's ledger. `IN` rows come from captured gifts, `OUT`
+/// rows from executed distribution items.
+model Transaction {
+  id          String               @id @default(cuid())
+  fundId      String
+  direction   TransactionDirection
+  amountCents Int
+  currency    String               @default("USD")
+  /// PayPal capture id, payout item id, or whatever reference the event carried.
+  paypalRef   String?
+  description String?
+  occurredAt  DateTime
+  createdAt   DateTime             @default(now())
+
+  giftId             String?
+  distributionItemId String?
+
+  fund             Fund              @relation(fields: [fundId], references: [id], onDelete: Restrict)
+  gift             Gift?             @relation(fields: [giftId], references: [id], onDelete: SetNull)
+  distributionItem DistributionItem? @relation(fields: [distributionItemId], references: [id], onDelete: SetNull)
+
+  @@unique([direction, paypalRef])
+  @@index([fundId, occurredAt])
+  @@index([occurredAt])
+}
+
+/// A payout destination. `maxPerPayoutCents` is the per-recipient ceiling the
+/// rules engine enforces, on top of the global MAX_PAYOUT_ITEM_USD.
+model Recipient {
+  id                String   @id @default(cuid())
+  churchId          String
+  fundId            String
+  name              String
+  paypalEmail       String
+  maxPerPayoutCents Int
+  active            Boolean  @default(true)
+  note              String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  church Church             @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  fund   Fund               @relation(fields: [fundId], references: [id], onDelete: Restrict)
+  items  DistributionItem[]
+
+  @@unique([churchId, paypalEmail])
+  @@index([fundId, active])
+}
+
+// ---------------------------------------------------------------------------
+// Distribution — the two-key approval flow
+// ---------------------------------------------------------------------------
+
+model Distribution {
+  id          String             @id @default(cuid())
+  fundId      String
+  status      DistributionStatus @default(PROPOSED)
+  /// Short explanation written by the AI when it proposed this plan. The AI
+  /// never approves and never executes — see spec §5.
+  aiRationale String?
+
+  treasurerApprovedBy String?
+  treasurerApprovedAt DateTime?
+  pastorApprovedBy    String?
+  pastorApprovedAt    DateTime?
+
+  /// `sender_batch_id` sent to the Payouts API; unique so a retry cannot double-pay.
+  senderBatchId String? @unique
+  paypalBatchId String? @unique
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  executedAt DateTime?
+
+  fund          Fund               @relation(fields: [fundId], references: [id], onDelete: Restrict)
+  items         DistributionItem[]
+  impactUpdates ImpactUpdate[]
+
+  @@index([fundId, status])
+}
+
+model DistributionItem {
+  id             String                 @id @default(cuid())
+  distributionId String
+  recipientId    String
+  amountCents    Int
+  currency       String                 @default("USD")
+  status         DistributionItemStatus @default(PENDING)
+  /// Why the rules engine blocked this line, when it did.
+  blockedReason  String?
+  paypalItemId   String?                @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  distribution Distribution  @relation(fields: [distributionId], references: [id], onDelete: Cascade)
+  recipient    Recipient     @relation(fields: [recipientId], references: [id], onDelete: Restrict)
+  transactions Transaction[]
+
+  @@index([distributionId])
+}
+
+// ---------------------------------------------------------------------------
+// Impact, audit, webhooks
+// ---------------------------------------------------------------------------
+
+model ImpactUpdate {
+  id             String             @id @default(cuid())
+  donorId        String
+  distributionId String
+  locale         String             @default("en")
+  body           String
+  status         ImpactUpdateStatus @default(DRAFT)
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  approvedAt DateTime?
+  sentAt     DateTime?
+
+  donor        User         @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  distribution Distribution @relation(fields: [distributionId], references: [id], onDelete: Cascade)
+
+  @@unique([donorId, distributionId])
+  @@index([status])
+}
+
+/// Every proposal, approval, rejection and execution, with who and when (spec §5).
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String
+  action    String
+  entity    String
+  entityId  String
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+/// Idempotency guard: a PayPal event id is processed at most once.
+model WebhookEvent {
+  id              String    @id @default(cuid())
+  paypalEventId   String    @unique
+  type            String
+  payload         Json?
+  receivedAt      DateTime  @default(now())
+  processedAt     DateTime?
+  processingError String?
+
+  @@index([type])
+}

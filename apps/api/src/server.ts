@@ -1,7 +1,12 @@
-import express, { type Express } from 'express';
+import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import cors from 'cors';
 
 import { env } from './config/env.js';
+import { healthRouter } from './routes/health.js';
+import { paypalRouter } from './routes/paypal.js';
+import { giftsRouter } from './routes/gifts.js';
+import { churchRouter } from './routes/church.js';
+import { PayPalApiError } from './paypal/client.js';
 
 export function createServer(): Express {
   const app = express();
@@ -11,6 +16,26 @@ export function createServer(): Express {
 
   app.get('/', (_req, res) => {
     res.json({ name: 'Steward AI API', version: '0.1.0' });
+  });
+
+  app.use(healthRouter);
+  app.use('/api', paypalRouter);
+  app.use('/api', giftsRouter);
+  app.use('/api', churchRouter);
+
+  app.use((_req, res) => {
+    res.status(404).json({ error: 'not_found' });
+  });
+
+  // Errors reach the client as a class and a short message — never a provider
+  // response body, which could echo request details back out.
+  app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    if (error instanceof PayPalApiError) {
+      console.error(`[api] ${error.name}: ${error.message}`);
+      return res.status(502).json({ error: 'paypal_error', status: error.status });
+    }
+    console.error('[api] unhandled error:', error);
+    res.status(500).json({ error: 'internal_error' });
   });
 
   return app;

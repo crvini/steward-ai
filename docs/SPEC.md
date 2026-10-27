@@ -280,5 +280,5 @@ original, con la razón. El resto del documento se mantiene tal cual se escribi�
 
 | Fecha | Sección | Cambio | Razón |
 |---|---|---|---|
-| 2026-10-26 | 5, 7 | `ANTHROPIC_MODEL_MAIN` pasa de `claude-sonnet-5-5` a `claude-sonnet-5`; `ANTHROPIC_MODEL_FAST` pasa de `claude-haiku-5-5` a `claude-haiku-4-5-20251001` | Los IDs originales no existen en la API de Anthropic y devolverían 404. Aprobado por el usuario el 26 de octubre de 2026. |
-| 2026-10-26 | 6 | PostgreSQL se levanta con Docker Compose (`postgres:16`) en el puerto **5433** | Evita chocar con la instalación local de PostgreSQL 14 en 5432 y hace el setup reproducible para los jueces. Aprobado por el usuario. |
+| 2026-10-26 | 5, 7 | _(revertido)_ Se consideró cambiar los IDs de modelo de Anthropic, pero `claude-sonnet-5-5` y `claude-haiku-5-5` **sí existen** — verificado contra `GET /v1/models` el 26 de octubre de 2026. Se mantienen los del spec. | — |
+| 2026-10-26 | 6 | PostgreSQL se levanta con Docker Compose (`postgres:16`) en el puerto **5434** | Evita chocar con la instalación local de PostgreSQL 14 en 5432 y con otro contenedor que ya ocupa 5433 y hace el setup reproducible para los jueces. Aprobado por el usuario. |

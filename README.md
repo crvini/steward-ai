@@ -47,6 +47,38 @@ pnpm dev
 
 The API runs on <http://localhost:4000> and the web app on <http://localhost:5173>.
 
+The Postgres container publishes **port 5434** on the host, so `DATABASE_URL` must read:
+
+```
+DATABASE_URL=postgresql://steward:steward@localhost:5434/steward_ai?schema=public
+```
+
+### Checking the setup
+
+`GET http://localhost:4000/health` verifies all three live dependencies and returns
+`200` only when every one answers:
+
+```json
+{
+  "status": "ok",
+  "services": {
+    "database":  { "ok": true, "detail": "PostgreSQL 16.14 …, 4 funds seeded" },
+    "paypal":    { "ok": true, "detail": "OAuth token issued (sandbox)" },
+    "anthropic": { "ok": true, "detail": "models reachable: …" }
+  }
+}
+```
+
+It never returns a key, a token, or any part of one.
+
+### Trying a one-time gift
+
+Open <http://localhost:5173>, pick a donor, a fund and an amount, then click the PayPal
+button. The server creates the order (Orders API v2), PayPal checkout opens, and on
+approval the server captures it and writes a `Gift` plus an `IN` `Transaction`. Sign in
+at the checkout with a **PayPal sandbox Personal account** from your developer dashboard
+— never a live account.
+
 ## How we use PayPal
 
 > To be completed — see [`docs/SPEC.md`](docs/SPEC.md) §4.

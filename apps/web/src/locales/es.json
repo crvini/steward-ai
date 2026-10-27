@@ -2,5 +2,32 @@
   "app": {
     "name": "Steward AI",
     "tagline": "Generosidad con transparencia — desde que alguien da hasta que ve el fruto."
+  },
+  "give": {
+    "title": "Dar a un fondo",
+    "subtitle": "Elige un fondo y un monto. El pago corre en PayPal; la orden se crea y se captura en nuestro servidor.",
+    "donor": "Dando como",
+    "fund": "Fondo",
+    "amount": "Monto (USD)",
+    "loadingSdk": "Cargando PayPal…",
+    "ineligible": "PayPal no está disponible para esta moneda en este momento.",
+    "captured": "Ofrenda capturada. Referencia de PayPal: {{id}}",
+    "cancelled": "Pago cancelado. No se cobró nada.",
+    "failed": "Algo salió mal: {{message}}"
+  },
+  "table": {
+    "title": "Ofrendas recientes",
+    "empty": "Todavía no hay ofrendas.",
+    "date": "Fecha",
+    "donor": "Donante",
+    "fund": "Fondo",
+    "amount": "Monto",
+    "status": "Estado"
+  },
+  "status": {
+    "PENDING": "Pendiente",
+    "COMPLETED": "Completada",
+    "FAILED": "Fallida",
+    "CANCELLED": "Cancelada"
   }
 }
