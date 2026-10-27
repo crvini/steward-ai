@@ -6,9 +6,11 @@ import { healthRouter } from './routes/health.js';
 import { paypalRouter } from './routes/paypal.js';
 import { giftsRouter } from './routes/gifts.js';
 import { churchRouter } from './routes/church.js';
+import { sessionRouter } from './routes/session.js';
 import { webhooksRouter } from './routes/webhooks.js';
 import { reconcileRouter } from './routes/reconcile.js';
 import { PayPalApiError } from './paypal/client.js';
+import { attachSession } from './auth/session.js';
 
 export function createServer(): Express {
   const app = express();
@@ -20,6 +22,7 @@ export function createServer(): Express {
   app.use('/api', webhooksRouter);
 
   app.use(express.json());
+  app.use(attachSession);
 
   app.get('/', (_req, res) => {
     res.json({ name: 'Steward AI API', version: '0.1.0' });
@@ -28,6 +31,7 @@ export function createServer(): Express {
   app.use(healthRouter);
   app.use('/api', paypalRouter);
   app.use('/api', giftsRouter);
+  app.use('/api', sessionRouter);
   app.use('/api', churchRouter);
   app.use('/api', reconcileRouter);
 

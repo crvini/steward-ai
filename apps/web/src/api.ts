@@ -10,6 +10,38 @@ export type Fund = {
 
 export type Donor = { id: string; name: string; locale: string };
 
+export type Role = 'DONOR' | 'TREASURER' | 'PASTOR';
+
+export type SessionUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  locale: string;
+};
+
+export type RolesResponse = {
+  church: { id: string; name: string };
+  featured: SessionUser[];
+  users: SessionUser[];
+};
+
+export type Receipt = {
+  id: string;
+  donor: string;
+  fund: string;
+  fundSlug: string;
+  fundBalanceCents: number;
+  amountCents: number;
+  currency: string;
+  frequency: 'ONE_TIME' | 'MONTHLY';
+  status: string;
+  captureId: string | null;
+  feeCents: number | null;
+  netCents: number | null;
+  occurredAt: string;
+};
+
 export type ChurchResponse = {
   church: { id: string; name: string; currency: string };
   funds: Fund[];
@@ -32,6 +64,8 @@ export type GiftRow = {
 async function json<T>(input: string, init?: RequestInit): Promise<T> {
   const res = await fetch(input, {
     ...init,
+    // The demo session rides in a cookie; without this it is never sent.
+    credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json', ...init?.headers },
   });
   if (!res.ok) {
@@ -45,11 +79,21 @@ export const api = {
   church: () => json<ChurchResponse>('/api/church'),
   clientToken: () => json<{ clientToken: string }>('/api/paypal/client-token'),
   gifts: () => json<{ gifts: GiftRow[] }>('/api/gifts'),
-  createGift: (body: { donorId: string; fundId: string; amountCents: number }) =>
+  // The donor is taken from the signed session, never sent by the browser.
+  createGift: (body: { fundId: string; amountCents: number }) =>
     json<{ giftId: string; orderId: string }>('/api/gifts', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+  receipt: (giftId: string) => json<Receipt>(`/api/gifts/${encodeURIComponent(giftId)}`),
+  roles: () => json<RolesResponse>('/api/session/roles'),
+  session: () => json<{ user: SessionUser | null }>('/api/session'),
+  signIn: (userId: string) =>
+    json<{ user: SessionUser }>('/api/session', {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    }),
+  signOut: () => json<{ user: null }>('/api/session', { method: 'DELETE' }),
   captureGift: (orderId: string) =>
     json<{ giftId: string; status: string; captureId?: string }>(
       `/api/gifts/${encodeURIComponent(orderId)}/capture`,

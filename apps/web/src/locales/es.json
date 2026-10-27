@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Steward AI",
-    "tagline": "Generosidad con transparencia — desde que alguien da hasta que ve el fruto."
+    "tagline": "Generosidad con transparencia — desde que alguien da hasta que ve el fruto.",
+    "loading": "Cargando…"
   },
   "give": {
     "title": "Dar a un fondo",
@@ -31,5 +32,50 @@
     "COMPLETED": "Completada",
     "FAILED": "Fallida",
     "CANCELLED": "Cancelada"
+  },
+  "demo": {
+    "banner": "Entorno de demostración · Sandbox de PayPal · No se mueve dinero real"
+  },
+  "role": {
+    "DONOR": "Miembro",
+    "TREASURER": "Tesorero",
+    "PASTOR": "Pastor"
+  },
+  "header": {
+    "viewingAs": "Viendo como",
+    "exit": "Salir"
+  },
+  "entry": {
+    "subtitle": "Elige un rol para explorar {{church}}. Sin contraseña, sin registro.",
+    "cta": "Haz clic para entrar →",
+    "entering": "Entrando…",
+    "noPassword": "Esto es una demostración. Todos los roles comparten los mismos datos de prueba y puedes cambiar cuando quieras.",
+    "role": {
+      "DONOR": {
+        "title": "Dar como miembro",
+        "blurb": "Da a un fondo y mira exactamente qué logró tu ofrenda."
+      },
+      "TREASURER": {
+        "title": "Administrar como tesorero",
+        "blurb": "Revisa cada ofrenda, propón repartos y pregúntale al libro."
+      },
+      "PASTOR": {
+        "title": "Aprobar como pastor",
+        "blurb": "La segunda llave: nada se reparte sin tu firma."
+      }
+    }
+  },
+  "receipt": {
+    "title": "Gracias, {{name}}",
+    "subtitle": "Tu ofrenda se procesó. Esto es exactamente lo que pasó con ella.",
+    "toFund": "para {{fund}}",
+    "gross": "Tu ofrenda",
+    "fee": "Comisión de PayPal",
+    "net": "Recibido por la iglesia",
+    "joins": "Tu ofrenda se suma a {{total}} que hoy tiene {{fund}}.",
+    "reference": "Referencia de PayPal",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "giveAgain": "Dar otra vez"
   }
 }

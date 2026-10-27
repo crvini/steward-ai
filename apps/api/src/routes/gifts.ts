@@ -10,7 +10,13 @@
  */
 import { Router } from 'express';
 import { z } from 'zod';
-import { GiftFrequency, GiftStatus, TransactionSource, Prisma } from '@prisma/client';
+import {
+  GiftFrequency,
+  GiftStatus,
+  TransactionDirection,
+  TransactionSource,
+  Prisma,
+} from '@prisma/client';
 
 import { prisma } from '../db/client.js';
 import { createOrder, captureOrder } from '../paypal/orders.js';
@@ -19,7 +25,6 @@ import { captureFactsFromOrder, recordCapturedGift } from '../gifts/record.js';
 export const giftsRouter = Router();
 
 const createGiftSchema = z.object({
-  donorId: z.string().min(1),
   fundId: z.string().min(1),
   // Cents, so the wire format cannot carry a rounding error.
   amountCents: z.number().int().positive().max(1_000_000),
@@ -31,7 +36,12 @@ giftsRouter.post('/gifts', async (req, res, next) => {
     if (!parsed.success) {
       return res.status(400).json({ error: 'invalid_request', issues: parsed.error.issues });
     }
-    const { donorId, fundId, amountCents } = parsed.data;
+    const { fundId, amountCents } = parsed.data;
+
+    // The donor comes from the signed session, never from the request body:
+    // otherwise anyone could record a gift in someone else's name.
+    if (!req.user) return res.status(401).json({ error: 'not_signed_in' });
+    const donorId = req.user.id;
 
     const [donor, fund] = await Promise.all([
       prisma.user.findUnique({ where: { id: donorId }, include: { church: true } }),
@@ -166,6 +176,57 @@ giftsRouter.get('/gifts', async (req, res, next) => {
         netCents: g.transactions[0]?.netCents ?? null,
         createdAt: g.createdAt.toISOString(),
       })),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * One gift with everything the receipt needs: amount, fund, the PayPal
+ * reference, and the fee/net breakdown that makes the transparency claim real.
+ */
+giftsRouter.get('/gifts/:id', async (req, res, next) => {
+  try {
+    const gift = await prisma.gift.findUnique({
+      where: { id: req.params.id },
+      include: {
+        donor: { select: { id: true, name: true } },
+        fund: { select: { id: true, name: true, slug: true } },
+        transactions: {
+          select: { paypalRef: true, feeCents: true, netCents: true, occurredAt: true },
+          orderBy: { createdAt: 'asc' },
+          take: 1,
+        },
+      },
+    });
+    if (!gift) return res.status(404).json({ error: 'gift_not_found' });
+
+    const ledger = gift.transactions[0];
+
+    // How much that fund holds right now, for the "your gift joins..." line.
+    const sums = await prisma.transaction.groupBy({
+      by: ['direction'],
+      _sum: { amountCents: true },
+      where: { fundId: gift.fundId },
+    });
+    const total = (d: TransactionDirection) =>
+      sums.find((s) => s.direction === d)?._sum.amountCents ?? 0;
+
+    res.json({
+      id: gift.id,
+      donor: gift.donor.name,
+      fund: gift.fund.name,
+      fundSlug: gift.fund.slug,
+      fundBalanceCents: total(TransactionDirection.IN) - total(TransactionDirection.OUT),
+      amountCents: gift.amountCents,
+      currency: gift.currency,
+      frequency: gift.frequency,
+      status: gift.status,
+      captureId: ledger?.paypalRef ?? null,
+      feeCents: ledger?.feeCents ?? null,
+      netCents: ledger?.netCents ?? null,
+      occurredAt: (gift.completedAt ?? ledger?.occurredAt ?? gift.createdAt).toISOString(),
     });
   } catch (error) {
     next(error);

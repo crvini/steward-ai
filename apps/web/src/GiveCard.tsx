@@ -8,7 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { api, formatCents, type ChurchResponse } from './api';
+import { api, formatCents, type ChurchResponse, type SessionUser } from './api';
 import type { PayPalSdkInstance } from './types/paypal';
 
 const PRESET_AMOUNTS = [25, 50, 100, 250];
@@ -113,13 +113,14 @@ function bootstrapPayPal(currencyCode: string): Promise<Bootstrap> {
 
 export function GiveCard({
   church,
+  user,
   onGiftCaptured,
 }: {
   church: ChurchResponse;
-  onGiftCaptured: () => void;
+  user: SessionUser;
+  onGiftCaptured: (giftId: string) => void;
 }) {
   const { t } = useTranslation();
-  const [donorId, setDonorId] = useState(church.donors[0]?.id ?? '');
   const [fundId, setFundId] = useState(church.funds[0]?.id ?? '');
   const [amount, setAmount] = useState(50);
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
@@ -132,8 +133,8 @@ export function GiveCard({
   const sdkRef = useRef<PayPalSdkInstance | null>(null);
   // The click handler must read the latest selections, but the PayPal session is
   // created once — a ref keeps the handler from going stale.
-  const selection = useRef({ donorId, fundId, amount });
-  selection.current = { donorId, fundId, amount };
+  const selection = useRef({ fundId, amount });
+  selection.current = { fundId, amount };
 
   useEffect(() => {
     let cancelled = false;
@@ -167,8 +168,7 @@ export function GiveCard({
         setResult(null);
         try {
           const captured = await api.captureGift(data.orderId);
-          setResult(t('give.captured', { id: captured.captureId ?? captured.giftId }));
-          onGiftCaptured();
+          onGiftCaptured(captured.giftId);
         } catch (error) {
           setResult(t('give.failed', { message: (error as Error).message }));
         } finally {
@@ -187,9 +187,9 @@ export function GiveCard({
 
     const handleClick = () => {
       setResult(null);
-      const { donorId: d, fundId: f, amount: a } = selection.current;
+      const { fundId: f, amount: a } = selection.current;
       const order = api
-        .createGift({ donorId: d, fundId: f, amountCents: Math.round(a * 100) })
+        .createGift({ fundId: f, amountCents: Math.round(a * 100) })
         .then(({ orderId }) => ({ orderId }));
 
       // v6 wants the promise itself, so the checkout opens inside the click gesture.
@@ -208,20 +208,12 @@ export function GiveCard({
       <p className="mt-1 text-sm text-neutral-600">{t('give.subtitle')}</p>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <label className="flex flex-col gap-1 text-sm">
+        <div className="flex flex-col gap-1 text-sm">
           <span className="font-medium">{t('give.donor')}</span>
-          <select
-            value={donorId}
-            onChange={(e) => setDonorId(e.target.value)}
-            className="rounded border border-neutral-300 px-3 py-2"
-          >
-            {church.donors.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-        </label>
+          <p className="rounded border border-neutral-200 bg-neutral-50 px-3 py-2 text-neutral-700">
+            {user.name}
+          </p>
+        </div>
 
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">{t('give.fund')}</span>

@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Steward AI",
-    "tagline": "Generosity with transparency — from the moment someone gives to the moment they see the fruit."
+    "tagline": "Generosity with transparency — from the moment someone gives to the moment they see the fruit.",
+    "loading": "Loading…"
   },
   "give": {
     "title": "Give to a fund",
@@ -31,5 +32,50 @@
     "COMPLETED": "Completed",
     "FAILED": "Failed",
     "CANCELLED": "Cancelled"
+  },
+  "demo": {
+    "banner": "Demo environment · PayPal sandbox · No real money moves"
+  },
+  "role": {
+    "DONOR": "Member",
+    "TREASURER": "Treasurer",
+    "PASTOR": "Pastor"
+  },
+  "header": {
+    "viewingAs": "Viewing as",
+    "exit": "Exit"
+  },
+  "entry": {
+    "subtitle": "Pick a role to explore {{church}}. No password, no sign-up.",
+    "cta": "Click to enter →",
+    "entering": "Entering…",
+    "noPassword": "This is a demo. Every role shares the same seeded church data, and you can switch at any time.",
+    "role": {
+      "DONOR": {
+        "title": "Give as a member",
+        "blurb": "Give to a fund and see exactly what your gift accomplished."
+      },
+      "TREASURER": {
+        "title": "Manage as treasurer",
+        "blurb": "Review every gift, propose distributions, ask questions of the ledger."
+      },
+      "PASTOR": {
+        "title": "Approve as pastor",
+        "blurb": "The second key: nothing is paid out without your signature."
+      }
+    }
+  },
+  "receipt": {
+    "title": "Thank you, {{name}}",
+    "subtitle": "Your gift went through. Here is exactly what happened to it.",
+    "toFund": "to {{fund}}",
+    "gross": "Your gift",
+    "fee": "PayPal fee",
+    "net": "Received by the church",
+    "joins": "Your gift joins {{total}} currently held in {{fund}}.",
+    "reference": "PayPal reference",
+    "copy": "Copy",
+    "copied": "Copied",
+    "giveAgain": "Give again"
   }
 }

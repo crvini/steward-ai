@@ -14,6 +14,7 @@ import {
   GiftFrequency,
   GiftStatus,
   TransactionDirection,
+  TransactionSource,
 } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -65,8 +66,12 @@ const FUNDS = [
   },
 ] as const;
 
+/**
+ * The first donor is the demo persona the entry screen offers to judges, so
+ * its email is stable and referenced by the session route.
+ */
 const DONORS = [
-  { name: 'María González', email: 'maria.gonzalez@example.com', locale: 'es' },
+  { name: 'Maria Lopez', email: 'member@hopechurch.example', locale: 'es' },
   { name: 'James Carter', email: 'james.carter@example.com', locale: 'en' },
   { name: 'Ana Lucía Pérez', email: 'ana.perez@example.com', locale: 'es' },
   { name: 'David Mwangi', email: 'david.mwangi@example.com', locale: 'en' },
@@ -77,8 +82,13 @@ const DONORS = [
 ] as const;
 
 const STAFF = [
-  { name: 'Elena Morales', email: 'treasurer@hopechurch.example', role: UserRole.TREASURER, locale: 'es' },
-  { name: 'Pastor Daniel Ruiz', email: 'pastor@hopechurch.example', role: UserRole.PASTOR, locale: 'es' },
+  { name: 'Daniel Ruiz', email: 'treasurer@hopechurch.example', role: UserRole.TREASURER, locale: 'es' },
+  {
+    name: 'Pastor Samuel Ortiz',
+    email: 'pastor@hopechurch.example',
+    role: UserRole.PASTOR,
+    locale: 'es',
+  },
 ] as const;
 
 /**
@@ -110,6 +120,19 @@ const RECIPIENTS = [
 ] as const;
 
 const GIFT_AMOUNTS = [20, 25, 35, 40, 50, 60, 75, 100, 120, 150, 200, 250] as const;
+
+/**
+ * PayPal's cut, so the seeded ledger is not pretending gifts arrive whole.
+ *
+ * The rate is the one sandbox actually applied to a real capture on
+ * 2026-10-26: $100.00 came in and the fee was $5.70, i.e. 5.4% + $0.30.
+ * Fees are a real part of what a treasurer reconciles, and the donor receipt
+ * shows them, so the demo data has to carry them too.
+ */
+const FEE_RATE = 0.054;
+const FEE_FIXED_CENTS = 30;
+
+const feeFor = (amountCents: number) => Math.round(amountCents * FEE_RATE) + FEE_FIXED_CENTS;
 
 async function main() {
   console.log('[seed] clearing existing demo data');
@@ -204,12 +227,16 @@ async function main() {
         },
       });
 
+      const feeCents = feeFor(amountCents);
       await prisma.transaction.create({
         data: {
           fundId: funds[slug].id,
           giftId: gift.id,
           direction: TransactionDirection.IN,
           amountCents,
+          feeCents,
+          netCents: amountCents - feeCents,
+          source: TransactionSource.SEED,
           paypalRef: `SEED-IN-${gift.id}`,
           description: `${isRecurring ? 'Recurring' : 'One-time'} gift from ${donor.name}`,
           occurredAt,
@@ -222,11 +249,15 @@ async function main() {
 
   const totals = await prisma.transaction.groupBy({
     by: ['fundId'],
-    _sum: { amountCents: true },
+    _sum: { amountCents: true, feeCents: true, netCents: true },
   });
   for (const f of FUNDS) {
-    const sum = totals.find((t) => t.fundId === funds[f.slug].id)?._sum.amountCents ?? 0;
-    console.log(`[seed]   ${f.name.padEnd(14)} $${(sum / 100).toFixed(2)}`);
+    const row = totals.find((t) => t.fundId === funds[f.slug].id)?._sum;
+    const gross = row?.amountCents ?? 0;
+    const net = row?.netCents ?? 0;
+    console.log(
+      `[seed]   ${f.name.padEnd(14)} gross $${(gross / 100).toFixed(2)}  net $${(net / 100).toFixed(2)}`,
+    );
   }
 
   console.log('[seed] done');
