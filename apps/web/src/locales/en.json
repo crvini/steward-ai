@@ -107,5 +107,38 @@
     "disclaimer": "The assistant can only propose. Nothing is charged until you press the PayPal button.",
     "failed": "The assistant could not answer: {{message}}",
     "rateLimited": "Too many requests on this demo. Try again in about {{minutes}} minutes."
+  },
+  "dist": {
+    "title": "Distributions",
+    "subtitle": "The assistant proposes. The rules decide. Two people sign.",
+    "fund": "Fund",
+    "propose": "Propose distribution",
+    "proposing": "Thinking…",
+    "empty": "No distributions yet.",
+    "recipients_one": "{{count}} recipient",
+    "recipients_other": "{{count}} recipients",
+    "keys": "Treasurer: {{treasurer}} · Pastor: {{pastor}}",
+    "aiSays": "Why the assistant proposed this",
+    "recipient": "Recipient",
+    "amount": "Amount",
+    "rules": "Rules check",
+    "passes": "Passes",
+    "payable": "Payable",
+    "fundHolds": "Fund holds",
+    "approveTreasurer": "Approve as treasurer",
+    "approvePastor": "Approve as pastor",
+    "execute": "Send payouts",
+    "executing": "Sending…",
+    "reject": "Reject",
+    "batch": "PayPal batch",
+    "blockedTitle": "The rules engine blocked at least one line.",
+    "blockedHelp": "Nothing can be approved while a line is blocked. Fix or remove it first.",
+    "status": {
+      "PROPOSED": "Proposed by AI",
+      "TREASURER_APPROVED": "Treasurer signed",
+      "APPROVED": "Both signed",
+      "EXECUTED": "Paid",
+      "FAILED": "Rejected"
+    }
   }
 }

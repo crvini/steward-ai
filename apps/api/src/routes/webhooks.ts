@@ -10,6 +10,8 @@
  */
 import { Router, raw } from 'express';
 import {
+  DistributionItemStatus,
+  DistributionStatus,
   GiftStatus,
   Prisma,
   TransactionDirection,
@@ -45,6 +47,17 @@ type PayPalEvent = {
     quantity?: string;
     subscriber?: { email_address?: string };
     billing_info?: { next_billing_time?: string };
+    /** PAYMENT.PAYOUTS-ITEM.* resources. */
+    payout_item_id?: string;
+    payout_item?: { sender_item_id?: string; receiver?: string };
+    payout_batch_id?: string;
+    transaction_status?: string;
+    errors?: { name?: string; message?: string };
+    batch_header?: {
+      payout_batch_id?: string;
+      batch_status?: string;
+      sender_batch_header?: { sender_batch_id?: string };
+    };
   };
 };
 
@@ -208,6 +221,80 @@ async function handleRecurringPayment(event: PayPalEvent): Promise<string> {
   return `recorded ${amountCents} cents for gift ${gift.id} (sale ${resource.id})`;
 }
 
+/**
+ * One payout reached its recipient, or failed to.
+ *
+ * `sender_item_id` is our DistributionItem id, set when the batch was sent.
+ * A failed item reverses its ledger row: the money never left, so leaving the
+ * OUT transaction standing would understate the fund.
+ */
+async function handlePayoutItem(event: PayPalEvent, succeeded: boolean): Promise<string> {
+  const resource = event.resource;
+  const itemId = resource?.payout_item?.sender_item_id;
+  if (!itemId) return 'payout item carries no sender_item_id';
+
+  const item = await prisma.distributionItem.findUnique({ where: { id: itemId } });
+  if (!item) return `no distribution item ${itemId}`;
+
+  await prisma.distributionItem.update({
+    where: { id: item.id },
+    data: {
+      status: succeeded ? DistributionItemStatus.SUCCEEDED : DistributionItemStatus.FAILED,
+      paypalItemId: resource?.payout_item_id ?? item.paypalItemId,
+      blockedReason: succeeded ? null : (resource?.errors?.message ?? 'PayPal reported a failure'),
+    },
+  });
+
+  if (!succeeded) {
+    // Undo the ledger entry: this money is still in the fund.
+    await prisma.transaction.deleteMany({
+      where: { distributionItemId: item.id, direction: TransactionDirection.OUT },
+    });
+  }
+
+  await prisma.auditLog.create({
+    data: {
+      actor: 'system:paypal-webhook',
+      action: succeeded ? 'payout.item_succeeded' : 'payout.item_failed',
+      entity: 'DistributionItem',
+      entityId: item.id,
+      payload: {
+        amountCents: item.amountCents,
+        payoutItemId: resource?.payout_item_id ?? null,
+        error: resource?.errors?.message ?? null,
+      },
+    },
+  });
+
+  return `item ${item.id} -> ${succeeded ? 'SUCCEEDED' : 'FAILED'}`;
+}
+
+/** The whole batch finished. Used to mark a distribution that fully failed. */
+async function handlePayoutBatch(event: PayPalEvent): Promise<string> {
+  const batchId = event.resource?.batch_header?.payout_batch_id;
+  if (!batchId) return 'batch event carries no payout_batch_id';
+
+  const distribution = await prisma.distribution.findUnique({
+    where: { paypalBatchId: batchId },
+    include: { items: true },
+  });
+  if (!distribution) return `no distribution for batch ${batchId}`;
+
+  const allFailed =
+    distribution.items.length > 0 &&
+    distribution.items.every((i) => i.status === DistributionItemStatus.FAILED);
+
+  if (allFailed && distribution.status !== DistributionStatus.FAILED) {
+    await prisma.distribution.update({
+      where: { id: distribution.id },
+      data: { status: DistributionStatus.FAILED },
+    });
+    return `batch ${batchId}: every item failed`;
+  }
+
+  return `batch ${batchId}: ${event.resource?.batch_header?.batch_status ?? 'reported'}`;
+}
+
 webhooksRouter.post(
   '/webhooks/paypal',
   // Raw body: signature verification needs PayPal's exact bytes.
@@ -276,6 +363,20 @@ webhooksRouter.post(
           break;
         case 'PAYMENT.SALE.COMPLETED':
           note = await handleRecurringPayment(event);
+          break;
+        case 'PAYMENT.PAYOUTS-ITEM.SUCCEEDED':
+          note = await handlePayoutItem(event, true);
+          break;
+        case 'PAYMENT.PAYOUTS-ITEM.FAILED':
+        case 'PAYMENT.PAYOUTS-ITEM.DENIED':
+        case 'PAYMENT.PAYOUTS-ITEM.RETURNED':
+        case 'PAYMENT.PAYOUTS-ITEM.BLOCKED':
+          note = await handlePayoutItem(event, false);
+          break;
+        case 'PAYMENT.PAYOUTSBATCH.SUCCESS':
+        case 'PAYMENT.PAYOUTSBATCH.DENIED':
+        case 'PAYMENT.PAYOUTSBATCH.PROCESSING':
+          note = await handlePayoutBatch(event);
           break;
         default:
           break;

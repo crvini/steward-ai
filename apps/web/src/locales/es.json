@@ -107,5 +107,38 @@
     "disclaimer": "El asistente solo puede proponer. No se cobra nada hasta que presionés el botón de PayPal.",
     "failed": "El asistente no pudo responder: {{message}}",
     "rateLimited": "Demasiadas peticiones en este demo. Probá de nuevo en unos {{minutes}} minutos."
+  },
+  "dist": {
+    "title": "Repartos",
+    "subtitle": "El asistente propone. Las reglas deciden. Firman dos personas.",
+    "fund": "Fondo",
+    "propose": "Proponer reparto",
+    "proposing": "Pensando…",
+    "empty": "Todavía no hay repartos.",
+    "recipients_one": "{{count}} destinatario",
+    "recipients_other": "{{count}} destinatarios",
+    "keys": "Tesorero: {{treasurer}} · Pastor: {{pastor}}",
+    "aiSays": "Por qué el asistente propuso esto",
+    "recipient": "Destinatario",
+    "amount": "Monto",
+    "rules": "Revisión de reglas",
+    "passes": "Pasa",
+    "payable": "Pagable",
+    "fundHolds": "El fondo tiene",
+    "approveTreasurer": "Aprobar como tesorero",
+    "approvePastor": "Aprobar como pastor",
+    "execute": "Enviar los pagos",
+    "executing": "Enviando…",
+    "reject": "Rechazar",
+    "batch": "Lote de PayPal",
+    "blockedTitle": "El motor de reglas bloqueó al menos una línea.",
+    "blockedHelp": "No se puede aprobar nada mientras haya una línea bloqueada. Corregila o quitala primero.",
+    "status": {
+      "PROPOSED": "Propuesto por la IA",
+      "TREASURER_APPROVED": "Firmó el tesorero",
+      "APPROVED": "Firmaron los dos",
+      "EXECUTED": "Pagado",
+      "FAILED": "Rechazado"
+    }
   }
 }

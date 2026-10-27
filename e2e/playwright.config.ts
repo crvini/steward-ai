@@ -26,6 +26,11 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 15_000 },
   fullyParallel: false,
+  // Un solo worker a propósito. Las pruebas comparten una base sembrada y un
+  // servidor de desarrollo; en paralelo aparecían fallos que no se reproducían
+  // al correrlas solas. La suite tarda ~12s, así que determinismo sale barato
+  // — y un fallo intermitente esconde los de verdad.
+  workers: 1,
   // El arranque del SDK de PayPal fue intermitente una vez: un reintento
   // escondería justo el fallo que estas pruebas existen para detectar.
   retries: 0,

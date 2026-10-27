@@ -15,6 +15,7 @@ import { GiftsTable } from './GiftsTable';
 import { GiftReceipt } from './GiftReceipt';
 import { RoleChooser } from './RoleChooser';
 import { DemoBanner } from './DemoBanner';
+import { Distributions } from './Distributions';
 
 /** Survives a reload so a refreshed receipt is not lost. */
 const LAST_GIFT_KEY = 'steward:lastGiftId';
@@ -200,23 +201,28 @@ export default function App() {
               ))}
             </section>
 
-            {receipt ? (
-              <GiftReceipt
-                receipt={receipt}
-                onGiveAgain={() => {
-                  sessionStorage.removeItem(LAST_GIFT_KEY);
-                  setReceipt(null);
-                }}
-              />
+            {/* El tesorero y el pastor trabajan sobre repartos; el miembro da. */}
+            {user.role === 'DONOR' ? (
+              receipt ? (
+                <GiftReceipt
+                  receipt={receipt}
+                  onGiveAgain={() => {
+                    sessionStorage.removeItem(LAST_GIFT_KEY);
+                    setReceipt(null);
+                  }}
+                />
+              ) : (
+                <GiveCard
+                  church={church}
+                  user={user}
+                  onGiftCaptured={(giftId) => {
+                    void showReceipt(giftId);
+                    void loadChurch();
+                  }}
+                />
+              )
             ) : (
-              <GiveCard
-                church={church}
-                user={user}
-                onGiftCaptured={(giftId) => {
-                  void showReceipt(giftId);
-                  void loadChurch();
-                }}
-              />
+              <Distributions church={church} user={user} onChanged={() => void loadChurch()} />
             )}
 
             <section>

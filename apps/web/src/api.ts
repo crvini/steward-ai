@@ -39,6 +39,59 @@ export type SubscriptionRow = {
   createdAt: string;
 };
 
+export type RuleViolation = { code: string; detail: string };
+
+export type CheckedLine = {
+  recipientId: string;
+  recipientName: string | null;
+  amountCents: number;
+  ok: boolean;
+  violations: RuleViolation[];
+};
+
+export type RulesVerdict = {
+  lines: CheckedLine[];
+  batchViolations: RuleViolation[];
+  payableCents: number;
+  executable: boolean;
+};
+
+export type DistributionDetail = {
+  id: string;
+  fund: string;
+  fundBalanceCents: number;
+  status:
+    | 'PROPOSED'
+    | 'TREASURER_APPROVED'
+    | 'APPROVED'
+    | 'EXECUTED'
+    | 'FAILED';
+  aiRationale: string | null;
+  treasurerApprovedBy: string | null;
+  pastorApprovedBy: string | null;
+  paypalBatchId: string | null;
+  verdict: RulesVerdict;
+};
+
+export type DistributionRow = {
+  id: string;
+  fund: string;
+  status: DistributionDetail['status'];
+  aiRationale: string | null;
+  treasurerApprovedBy: string | null;
+  pastorApprovedBy: string | null;
+  totalCents: number;
+  items: {
+    id: string;
+    recipient: string;
+    amountCents: number;
+    status: string;
+    blockedReason: string | null;
+  }[];
+  createdAt: string;
+  executedAt: string | null;
+};
+
 export type Receipt = {
   id: string;
   donor: string;
@@ -115,6 +168,34 @@ export const api = {
       { method: 'POST' },
     ),
   subscriptions: () => json<{ subscriptions: SubscriptionRow[] }>('/api/subscriptions'),
+  distributions: () => json<{ distributions: DistributionRow[] }>('/api/distributions'),
+  distribution: (id: string) =>
+    json<DistributionDetail>(`/api/distributions/${encodeURIComponent(id)}`),
+  proposeDistribution: (fundId: string) =>
+    json<{ id: string }>('/api/distributions/propose', {
+      method: 'POST',
+      body: JSON.stringify({ fundId }),
+    }),
+  approveDistribution: (id: string) =>
+    json<{ id: string; status: string }>(
+      `/api/distributions/${encodeURIComponent(id)}/approve`,
+      { method: 'POST' },
+    ),
+  rejectDistribution: (id: string, note: string) =>
+    json<{ id: string; status: string }>(`/api/distributions/${encodeURIComponent(id)}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ note }),
+    }),
+  executeDistribution: (id: string) =>
+    json<{ id: string; status: string; paypalBatchId?: string }>(
+      `/api/distributions/${encodeURIComponent(id)}/execute`,
+      { method: 'POST' },
+    ),
+  adjustDistribution: (id: string, lines: { recipientId: string; amountCents: number }[]) =>
+    json<{ verdict: RulesVerdict }>(`/api/distributions/${encodeURIComponent(id)}/lines`, {
+      method: 'PUT',
+      body: JSON.stringify({ lines }),
+    }),
   roles: () => json<RolesResponse>('/api/session/roles'),
   session: () => json<{ user: SessionUser | null }>('/api/session'),
   signIn: (userId: string) =>

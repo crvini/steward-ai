@@ -9,6 +9,7 @@ import { churchRouter } from './routes/church.js';
 import { sessionRouter } from './routes/session.js';
 import { subscriptionsRouter } from './routes/subscriptions.js';
 import { aiRouter } from './routes/ai.js';
+import { distributionsRouter } from './routes/distributions.js';
 import { webhooksRouter } from './routes/webhooks.js';
 import { reconcileRouter } from './routes/reconcile.js';
 import { PayPalApiError } from './paypal/client.js';
@@ -35,6 +36,7 @@ export function createServer(): Express {
   app.use('/api', giftsRouter);
   app.use('/api', subscriptionsRouter);
   app.use('/api', aiRouter);
+  app.use('/api', distributionsRouter);
   app.use('/api', sessionRouter);
   app.use('/api', churchRouter);
   app.use('/api', reconcileRouter);
