@@ -94,7 +94,7 @@ ledgerRouter.get(
         take: 1000,
         include: {
           fund: { select: { name: true, slug: true } },
-          gift: { select: { donor: { select: { name: true } } } },
+          gift: { select: { frequency: true, donor: { select: { name: true } } } },
           distributionItem: { select: { recipient: { select: { name: true } } } },
         },
       });
@@ -109,6 +109,12 @@ ledgerRouter.get(
           // One column the treasurer actually reads: who it came from or went to.
           party:
             t.gift?.donor.name ?? t.distributionItem?.recipient.name ?? '—',
+          type: t.gift?.frequency ?? null,
+          // A row with no PayPal reference is money the book claims and
+          // PayPal cannot confirm. It happens for real — a payment recorded
+          // by hand, a capture that never landed — and it is the first thing
+          // a treasurer should see.
+          inPayPal: t.paypalRef !== null,
           amount: t.amountCents / 100,
           fee: t.feeCents === null ? null : t.feeCents / 100,
           net: t.netCents === null ? null : t.netCents / 100,

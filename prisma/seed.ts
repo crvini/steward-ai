@@ -116,6 +116,7 @@ const RECIPIENTS = [
     fundSlug: FundSlug.MISSIONS,
     maxPerPayout: 400,
     note: 'Monthly support, church plant in Quetzaltenango.',
+    active: true,
   },
   {
     name: 'Kofi Mensah — West Africa',
@@ -123,6 +124,7 @@ const RECIPIENTS = [
     fundSlug: FundSlug.MISSIONS,
     maxPerPayout: 350,
     note: 'Monthly support, translation work.',
+    active: true,
   },
   {
     name: 'Hope Benevolence Fund',
@@ -130,6 +132,19 @@ const RECIPIENTS = [
     fundSlug: FundSlug.BENEVOLENCE,
     maxPerPayout: 500,
     note: 'Disbursed by the deacons for rent, food and medical emergencies.',
+    active: true,
+  },
+  {
+    // Deliberately NOT approved. A family the church is helping informally,
+    // whom the assistant will reasonably suggest and the rules engine will
+    // reasonably refuse. This is the moment the demo exists to show, and
+    // seeding it means nobody has to provoke it live while recording.
+    name: 'Rivera family',
+    paypalEmail: 'rivera.family@personal.example.com',
+    fundSlug: FundSlug.BENEVOLENCE,
+    maxPerPayout: 600,
+    note: 'Mentioned by the pastor on Sunday. Not approved yet.',
+    active: false,
   },
 ] as const;
 
@@ -206,6 +221,7 @@ async function main() {
           paypalEmail: r.paypalEmail,
           maxPerPayoutCents: dollars(r.maxPerPayout),
           note: r.note,
+          active: r.active,
         },
       }),
     ),
@@ -369,7 +385,10 @@ async function main() {
 
   // Uno esperando la firma del pastor, para que su bandeja no abra vacía.
   const benevolenceRecipient = await prisma.recipient.findFirst({
-    where: { fundId: benevolence.id },
+    where: { fundId: benevolence.id, active: true },
+  });
+  const riveraFamily = await prisma.recipient.findFirst({
+    where: { fundId: benevolence.id, active: false },
   });
   if (benevolenceRecipient) {
     await prisma.distribution.create({
@@ -377,16 +396,57 @@ async function main() {
         fundId: benevolence.id,
         status: DistributionStatus.TREASURER_APPROVED,
         aiRationale:
-          'I proposed $400 to the benevolence fund, below its $500 limit, so that something is left for an emergency later in the month. There is no payment history to match, so please check whether this is the right level before approving.',
+          'I proposed $400 to the benevolence fund, below its $500 limit, so something is left for an emergency later in the month. Pastor Samuel mentioned the Rivera family on Sunday, so I added them too, but they are not an approved recipient yet.',
         treasurerApprovedBy: treasurerUser.email,
         treasurerApprovedAt: daysBefore(1),
         createdAt: daysBefore(1),
         items: {
-          create: [{ recipientId: benevolenceRecipient.id, amountCents: 40_000 }],
+          create: [
+            { recipientId: benevolenceRecipient.id, amountCents: 40_000 },
+            // La línea que el motor de reglas rechaza.
+            ...(riveraFamily
+              // $300: por debajo de todos los topes a propósito, para que la
+              // única regla que falle sea la que importa en el demo — no es
+              // un destinatario aprobado — y el motivo se lea de una.
+              ? [{ recipientId: riveraFamily.id, amountCents: 30_000 }]
+              : []),
+          ],
         },
       },
     });
   }
+
+  // Una ofrenda que el libro tiene y PayPal no. No es un error inventado:
+  // pasa de verdad cuando alguien registra un pago a mano o una captura se
+  // pierde, y es exactamente lo que el auditor debe encontrar.
+  const sinPayPal = donors.find((d) => d.name === 'Carlos Herrera') ?? donors[1]!;
+  const sinPayPalAt = daysBefore(5);
+  const huerfana = await prisma.gift.create({
+    data: {
+      donorId: sinPayPal.id,
+      fundId: missions.id,
+      amountCents: 10_000,
+      frequency: GiftFrequency.ONE_TIME,
+      status: GiftStatus.COMPLETED,
+      createdAt: sinPayPalAt,
+      completedAt: sinPayPalAt,
+    },
+  });
+  await prisma.transaction.create({
+    data: {
+      fundId: missions.id,
+      giftId: huerfana.id,
+      direction: TransactionDirection.IN,
+      amountCents: 10_000,
+      // Sin referencia a propósito: nunca llegó una captura de PayPal.
+      paypalRef: null,
+      source: TransactionSource.SEED,
+      description: `Recorded by hand — no PayPal capture`,
+      occurredAt: sinPayPalAt,
+    },
+  });
+
+  console.log('[seed] reconciliation: 1 gift of $100.00 recorded with no PayPal reference');
 
   console.log(`[seed] distributions: 1 executed with ${missionDonors.length} impact notes, 1 awaiting the pastor`);
 

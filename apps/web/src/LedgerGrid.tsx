@@ -99,7 +99,14 @@ export function LedgerGrid({ locale }: { locale: string }) {
         width: 110,
         valueFormatter: ({ value }) => t(`grid.${value === 'IN' ? 'in' : 'out'}`),
       },
-      { field: 'party', headerName: t('grid.party'), flex: 1, minWidth: 180 },
+      { field: 'party', headerName: t('grid.party'), flex: 1, minWidth: 170 },
+      {
+        field: 'type',
+        headerName: t('grid.type'),
+        width: 120,
+        valueFormatter: ({ value }) =>
+          value === null ? '—' : t(value === 'MONTHLY' ? 'give.monthly' : 'give.oneTime'),
+      },
       {
         field: 'amount',
         headerName: t('grid.amount'),
@@ -121,6 +128,12 @@ export function LedgerGrid({ locale }: { locale: string }) {
         type: 'rightAligned',
         valueFormatter: money,
         width: 120,
+      },
+      {
+        field: 'inPayPal',
+        headerName: t('grid.status'),
+        width: 150,
+        valueFormatter: ({ value }) => t(value ? 'grid.confirmed' : 'grid.notInPayPal'),
       },
     ],
     [t, money],
@@ -251,6 +264,11 @@ export function LedgerGrid({ locale }: { locale: string }) {
           rowData={rows}
           columnDefs={columns}
           defaultColDef={{ filter: true, sortable: true, resizable: true }}
+          // Las filas que PayPal no confirma se marcan: es lo primero que un
+          // tesorero tiene que ver al abrir el libro.
+          getRowStyle={({ data }) =>
+            data && !data.inPayPal ? { backgroundColor: 'rgba(245, 158, 11, 0.10)' } : undefined
+          }
           onGridReady={(e: GridReadyEvent<LedgerRow>) => {
             gridApi.current = e.api;
           }}

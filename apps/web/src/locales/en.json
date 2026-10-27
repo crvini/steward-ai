@@ -165,7 +165,11 @@
     "ask": "Ask",
     "asking": "Looking…",
     "clear": "Clear filter",
-    "filterApplied": "Filter applied to the grid"
+    "filterApplied": "Filter applied to the grid",
+    "type": "Type",
+    "status": "Status",
+    "confirmed": "Confirmed",
+    "notInPayPal": "Not in PayPal"
   },
   "impact": {
     "mine": "What your giving did",
@@ -217,7 +221,7 @@
   },
   "rule": {
     "RECIPIENT_UNKNOWN": "Every recipient is on the approved list",
-    "RECIPIENT_INACTIVE": "Every recipient is currently active",
+    "RECIPIENT_INACTIVE": "Every recipient is approved to receive",
     "RECIPIENT_WRONG_FUND": "Every recipient receives from this fund",
     "AMOUNT_NOT_POSITIVE": "Every amount is positive",
     "AMOUNT_NOT_WHOLE_CENTS": "Every amount is a whole number of cents",

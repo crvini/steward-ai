@@ -89,7 +89,7 @@ export type RulesVerdict = {
  */
 const RULE_LABELS: Record<RuleCode | BatchRuleCode, string> = {
   RECIPIENT_UNKNOWN: 'Every recipient is on the approved list',
-  RECIPIENT_INACTIVE: 'Every recipient is currently active',
+  RECIPIENT_INACTIVE: 'Every recipient is approved to receive',
   RECIPIENT_WRONG_FUND: 'Every recipient receives from this fund',
   AMOUNT_NOT_POSITIVE: 'Every amount is positive',
   AMOUNT_NOT_WHOLE_CENTS: 'Every amount is a whole number of cents',
@@ -134,9 +134,11 @@ export function checkDistribution(options: {
       });
     } else {
       if (!recipient.active) {
+        // Wording matters on screen: "not active" reads like a glitch,
+        // "not an approved recipient" reads like a decision someone made.
         violations.push({
           code: 'RECIPIENT_INACTIVE',
-          detail: `${recipient.name} is not currently active.`,
+          detail: `${recipient.name} is not an approved recipient. The pastor can add them in Settings.`,
         });
       }
       if (recipient.fundId !== fundId) {

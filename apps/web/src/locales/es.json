@@ -165,7 +165,11 @@
     "ask": "Preguntar",
     "asking": "Buscando…",
     "clear": "Quitar filtro",
-    "filterApplied": "Filtro aplicado a la tabla"
+    "filterApplied": "Filtro aplicado a la tabla",
+    "type": "Tipo",
+    "status": "Estado",
+    "confirmed": "Confirmada",
+    "notInPayPal": "No está en PayPal"
   },
   "impact": {
     "mine": "Lo que logró tu ofrenda",
@@ -217,7 +221,7 @@
   },
   "rule": {
     "RECIPIENT_UNKNOWN": "Todo destinatario está en la lista aprobada",
-    "RECIPIENT_INACTIVE": "Todo destinatario está activo",
+    "RECIPIENT_INACTIVE": "Todo destinatario está aprobado para recibir",
     "RECIPIENT_WRONG_FUND": "Todo destinatario recibe de este fondo",
     "AMOUNT_NOT_POSITIVE": "Todo monto es positivo",
     "AMOUNT_NOT_WHOLE_CENTS": "Todo monto es un número entero de centavos",

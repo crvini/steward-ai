@@ -110,6 +110,9 @@ export type LedgerRow = {
   fundSlug: string;
   direction: 'IN' | 'OUT';
   party: string;
+  type: 'ONE_TIME' | 'MONTHLY' | null;
+  /** False when the book has a row PayPal cannot confirm. */
+  inPayPal: boolean;
   amount: number;
   fee: number | null;
   net: number | null;
