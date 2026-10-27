@@ -19,39 +19,96 @@ type Status =
   | { kind: 'ineligible' }
   | { kind: 'error'; message: string };
 
-/** Resolves once the v6 script has put `paypal` on window. */
+/**
+ * Resolves once the v6 script has put `paypal` on window.
+ *
+ * The documented signal is the `paypal-web-sdk-loaded` event, but it does not
+ * reliably reach `window`: the async script often finishes before React mounts,
+ * and in that race the listener is attached after the event has already been
+ * dispatched, so it never fires and the card hangs on "loading" forever.
+ * Polling the global is the only signal that cannot be missed, so the event is
+ * kept purely as a fast path and the poll is what guarantees progress.
+ */
+const SDK_POLL_INTERVAL_MS = 50;
+
 function whenSdkLoaded(): Promise<void> {
   if (window.paypal) return Promise.resolve();
+
   return new Promise((resolve) => {
-    window.addEventListener('paypal-web-sdk-loaded', () => resolve(), { once: true });
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      clearInterval(poll);
+      window.removeEventListener('paypal-web-sdk-loaded', finish);
+      resolve();
+    };
+
+    const poll = setInterval(() => {
+      if (window.paypal) finish();
+    }, SDK_POLL_INTERVAL_MS);
+
+    window.addEventListener('paypal-web-sdk-loaded', finish, { once: true });
   });
 }
 
+/** Rejects instead of hanging forever when a PayPal call never settles. */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+    promise.then(resolve, reject).finally(() => clearTimeout(timer));
+  });
+}
+
+type Bootstrap = { sdk: PayPalSdkInstance; eligible: boolean };
+
 /**
- * `createInstance` tolerates exactly one call per page session — a second one
- * never settles. StrictMode mounts every effect twice in development, so the
- * instance is memoized here rather than created inside the effect.
+ * `createInstance` and `findEligibleMethods` each tolerate exactly one call per
+ * page session — a concurrent second call never settles, which left the card
+ * stuck on "loading" with no error. StrictMode invokes every effect twice in
+ * development, so the whole bootstrap is memoized as a single promise that both
+ * invocations share. Only a page reload gets a fresh one.
  */
-let sdkInstancePromise: Promise<PayPalSdkInstance> | null = null;
+let bootstrapPromise: Promise<Bootstrap> | null = null;
 
-function getSdkInstance(): Promise<PayPalSdkInstance> {
-  sdkInstancePromise ??= (async () => {
-    await whenSdkLoaded();
-    if (!window.paypal) throw new Error('PayPal SDK failed to load');
+const BOOTSTRAP_TIMEOUT_MS = 20_000;
 
-    const { clientToken } = await api.clientToken();
-    return window.paypal.createInstance({
-      clientToken,
-      components: ['paypal-payments'],
-      pageType: 'checkout',
-    });
-  })().catch((error: unknown) => {
-    // Let a later mount retry instead of caching the failure forever.
-    sdkInstancePromise = null;
+function bootstrapPayPal(currencyCode: string): Promise<Bootstrap> {
+  const t0 = performance.now();
+  const mark = (stage: string) => {
+    if (import.meta.env.DEV) console.log(`[paypal] ${stage} +${Math.round(performance.now() - t0)}ms`);
+  };
+
+  bootstrapPromise ??= withTimeout(
+    (async (): Promise<Bootstrap> => {
+      mark('bootstrap:start');
+      await whenSdkLoaded();
+      mark('script:loaded');
+      if (!window.paypal) throw new Error('PayPal SDK script loaded but exposed no global');
+
+      const { clientToken } = await api.clientToken();
+      mark('token:received');
+      const sdk = await window.paypal.createInstance({
+        clientToken,
+        components: ['paypal-payments'],
+        pageType: 'checkout',
+      });
+      mark('instance:created');
+
+      const methods = await sdk.findEligibleMethods({ currencyCode });
+      mark('eligibility:resolved');
+      return { sdk, eligible: methods.isEligible('paypal') };
+    })(),
+    BOOTSTRAP_TIMEOUT_MS,
+    'PayPal setup',
+  ).catch((error: unknown) => {
+    // Clear the memo so a reload can start clean. Retrying in place would call
+    // createInstance a second time on the same page session, which hangs.
+    bootstrapPromise = null;
     throw error;
   });
 
-  return sdkInstancePromise;
+  return bootstrapPromise;
 }
 
 export function GiveCard({
@@ -67,6 +124,9 @@ export function GiveCard({
   const [amount, setAmount] = useState(50);
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
   const [result, setResult] = useState<string | null>(null);
+  // The capture is a round trip to PayPal and takes a second or two. Without
+  // this the popup just closes and nothing visibly happens.
+  const [capturing, setCapturing] = useState(false);
 
   const buttonRef = useRef<HTMLElement | null>(null);
   const sdkRef = useRef<PayPalSdkInstance | null>(null);
@@ -80,13 +140,10 @@ export function GiveCard({
 
     (async () => {
       try {
-        const sdk = await getSdkInstance();
+        const { sdk, eligible } = await bootstrapPayPal(church.church.currency);
         if (cancelled) return;
         sdkRef.current = sdk;
-
-        const methods = await sdk.findEligibleMethods({ currencyCode: church.church.currency });
-        if (cancelled) return;
-        setStatus(methods.isEligible('paypal') ? { kind: 'ready' } : { kind: 'ineligible' });
+        setStatus(eligible ? { kind: 'ready' } : { kind: 'ineligible' });
       } catch (error) {
         if (!cancelled) {
           setStatus({ kind: 'error', message: (error as Error).message });
@@ -106,18 +163,24 @@ export function GiveCard({
 
     const session = sdk.createPayPalOneTimePaymentSession({
       async onApprove(data) {
+        setCapturing(true);
+        setResult(null);
         try {
           const captured = await api.captureGift(data.orderId);
           setResult(t('give.captured', { id: captured.captureId ?? captured.giftId }));
           onGiftCaptured();
         } catch (error) {
           setResult(t('give.failed', { message: (error as Error).message }));
+        } finally {
+          setCapturing(false);
         }
       },
       onCancel() {
+        setCapturing(false);
         setResult(t('give.cancelled'));
       },
       onError(error) {
+        setCapturing(false);
         setResult(t('give.failed', { message: String(error) }));
       },
     });
@@ -217,7 +280,16 @@ export function GiveCard({
           <p className="text-sm text-amber-700">{t('give.ineligible')}</p>
         )}
         {status.kind === 'error' && (
-          <p className="text-sm text-red-700">{t('give.failed', { message: status.message })}</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm text-red-700">{t('give.failed', { message: status.message })}</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="rounded border border-neutral-300 px-3 py-1.5 text-sm font-medium"
+            >
+              {t('give.retry')}
+            </button>
+          </div>
         )}
         <paypal-button
           ref={buttonRef}
@@ -226,7 +298,17 @@ export function GiveCard({
         />
       </div>
 
-      {result && <p className="mt-4 text-sm font-medium">{result}</p>}
+      {capturing && (
+        <p className="mt-4 flex items-center gap-2 text-sm font-medium text-neutral-700">
+          <span
+            aria-hidden="true"
+            className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-700"
+          />
+          {t('give.capturing')}
+        </p>
+      )}
+
+      {!capturing && result && <p className="mt-4 text-sm font-medium">{result}</p>}
     </section>
   );
 }

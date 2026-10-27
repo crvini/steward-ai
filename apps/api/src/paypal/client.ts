@@ -71,6 +71,7 @@ export async function browserSafeClientToken(): Promise<{ token: string; expires
 
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  /** An object is serialized; a string is sent verbatim. */
   body?: unknown;
   /** Sent as `PayPal-Request-Id`, which makes a retried create idempotent. */
   requestId?: string;
@@ -89,7 +90,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     const res = await fetch(`${BASE_URL}${path}`, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : typeof body === 'string' ? body : JSON.stringify(body),
     });
 
     if (res.ok) {
@@ -115,6 +116,8 @@ export const paypal = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: unknown, requestId?: string) =>
     request<T>(path, { method: 'POST', body, requestId }),
+  /** Posts a pre-serialized body, for payloads whose exact bytes matter. */
+  postRaw: <T>(path: string, body: string) => request<T>(path, { method: 'POST', body }),
 };
 
 /** Used by /health: proves the credentials actually mint a token. */

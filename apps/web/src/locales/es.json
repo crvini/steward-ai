@@ -13,7 +13,9 @@
     "ineligible": "PayPal no está disponible para esta moneda en este momento.",
     "captured": "Ofrenda capturada. Referencia de PayPal: {{id}}",
     "cancelled": "Pago cancelado. No se cobró nada.",
-    "failed": "Algo salió mal: {{message}}"
+    "failed": "Algo salió mal: {{message}}",
+    "retry": "Recargar y reintentar",
+    "capturing": "Confirmando tu ofrenda con PayPal…"
   },
   "table": {
     "title": "Ofrendas recientes",

@@ -10,11 +10,11 @@
  */
 import { Router } from 'express';
 import { z } from 'zod';
-import { GiftFrequency, GiftStatus, TransactionDirection, Prisma } from '@prisma/client';
+import { GiftFrequency, GiftStatus, TransactionSource, Prisma } from '@prisma/client';
 
 import { prisma } from '../db/client.js';
-import { createOrder, captureOrder, completedCapture } from '../paypal/orders.js';
-import { payPalValueToCents } from '../money.js';
+import { createOrder, captureOrder } from '../paypal/orders.js';
+import { captureFactsFromOrder, recordCapturedGift } from '../gifts/record.js';
 
 export const giftsRouter = Router();
 
@@ -57,7 +57,10 @@ giftsRouter.post('/gifts', async (req, res, next) => {
       churchName: donor.church.name,
     });
 
-    await prisma.gift.update({ where: { id: gift.id }, data: { paypalOrderId: order.id } });
+    await prisma.gift.update({
+      where: { id: gift.id },
+      data: { paypalOrderId: order.id, rawOrder: order as unknown as Prisma.InputJsonValue },
+    });
     await prisma.auditLog.create({
       data: {
         actor: donor.email,
@@ -87,9 +90,9 @@ giftsRouter.post('/gifts/:orderId/capture', async (req, res, next) => {
     }
 
     const order = await captureOrder(orderId);
-    const capture = completedCapture(order);
+    const facts = captureFactsFromOrder(order);
 
-    if (!capture) {
+    if (!facts) {
       await prisma.gift.update({
         where: { id: gift.id },
         data: { status: GiftStatus.FAILED },
@@ -97,50 +100,20 @@ giftsRouter.post('/gifts/:orderId/capture', async (req, res, next) => {
       return res.status(502).json({ error: 'capture_not_completed', orderStatus: order.status });
     }
 
-    const amountCents = payPalValueToCents(capture.amount.value);
-    const occurredAt = capture.create_time ? new Date(capture.create_time) : new Date();
-
-    const updated = await prisma.$transaction(async (tx) => {
-      const g = await tx.gift.update({
-        where: { id: gift.id },
-        data: { status: GiftStatus.COMPLETED, completedAt: occurredAt },
-      });
-
-      // `@@unique([direction, paypalRef])` makes a replayed capture a no-op.
-      await tx.transaction.createMany({
-        data: [
-          {
-            fundId: g.fundId,
-            giftId: g.id,
-            direction: TransactionDirection.IN,
-            amountCents,
-            currency: capture.amount.currency_code,
-            paypalRef: capture.id,
-            description: 'One-time gift captured via PayPal Orders API',
-            occurredAt,
-          },
-        ],
-        skipDuplicates: true,
-      });
-
-      await tx.auditLog.create({
-        data: {
-          actor: 'system:paypal-capture',
-          action: 'gift.captured',
-          entity: 'Gift',
-          entityId: g.id,
-          payload: { orderId, captureId: capture.id, amountCents },
-        },
-      });
-
-      return g;
+    const { gift: updated, created } = await recordCapturedGift({
+      gift,
+      facts,
+      source: TransactionSource.CAPTURE,
+      rawCapture: order,
+      actor: 'system:paypal-capture',
     });
 
     res.json({
       giftId: updated.id,
       status: updated.status,
-      captureId: capture.id,
-      amountCents,
+      captureId: facts.captureId,
+      amountCents: updated.amountCents,
+      recordedByWebhookFirst: !created,
     });
   } catch (error) {
     next(error);
@@ -168,6 +141,11 @@ giftsRouter.get('/gifts', async (req, res, next) => {
       include: {
         donor: { select: { id: true, name: true } },
         fund: { select: { id: true, name: true, slug: true } },
+        transactions: {
+          select: { paypalRef: true, feeCents: true, netCents: true },
+          orderBy: { createdAt: 'asc' },
+          take: 1,
+        },
       },
     });
 
@@ -182,6 +160,10 @@ giftsRouter.get('/gifts', async (req, res, next) => {
         frequency: g.frequency,
         status: g.status,
         paypalOrderId: g.paypalOrderId,
+        payerEmail: g.payerEmail,
+        captureId: g.transactions[0]?.paypalRef ?? null,
+        feeCents: g.transactions[0]?.feeCents ?? null,
+        netCents: g.transactions[0]?.netCents ?? null,
         createdAt: g.createdAt.toISOString(),
       })),
     });

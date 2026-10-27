@@ -6,12 +6,19 @@ import { healthRouter } from './routes/health.js';
 import { paypalRouter } from './routes/paypal.js';
 import { giftsRouter } from './routes/gifts.js';
 import { churchRouter } from './routes/church.js';
+import { webhooksRouter } from './routes/webhooks.js';
+import { reconcileRouter } from './routes/reconcile.js';
 import { PayPalApiError } from './paypal/client.js';
 
 export function createServer(): Express {
   const app = express();
 
   app.use(cors({ origin: env.WEB_URL, credentials: true }));
+
+  // Webhooks are mounted before the JSON parser: signature verification needs
+  // PayPal's exact bytes, and express.json() would consume the stream.
+  app.use('/api', webhooksRouter);
+
   app.use(express.json());
 
   app.get('/', (_req, res) => {
@@ -22,6 +29,7 @@ export function createServer(): Express {
   app.use('/api', paypalRouter);
   app.use('/api', giftsRouter);
   app.use('/api', churchRouter);
+  app.use('/api', reconcileRouter);
 
   app.use((_req, res) => {
     res.status(404).json({ error: 'not_found' });

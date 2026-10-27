@@ -84,7 +84,35 @@ at the checkout with a **PayPal sandbox Personal account** from your developer d
 
 ## How we use PayPal
 
-> To be completed — see [`docs/SPEC.md`](docs/SPEC.md) §4.
+Everything below is wired to the live PayPal sandbox — no mocks, no stubs.
+
+| PayPal product | Where it runs | What it does here |
+|---|---|---|
+| **JavaScript SDK v6** | `apps/web/src/GiveCard.tsx` | `createInstance` + `createPayPalOneTimePaymentSession` behind a `<paypal-button>`. The browser only ever holds an order id. |
+| **OAuth 2.0 client credentials** | `apps/api/src/paypal/client.ts` | Server token cached and refreshed 60s early, one retry on `401`, exponential backoff on `429`/`5xx`. |
+| **Browser-safe client token** | `GET /api/paypal/client-token` | `response_type=client_token`, domain-bound and short-lived, so `PAYPAL_CLIENT_SECRET` never reaches the browser. |
+| **Orders API v2 — create** | `POST /api/gifts` | Server-side, with the Gift id as `custom_id` **and** as the `PayPal-Request-Id` idempotency key, so a retried create cannot double-charge. |
+| **Orders API v2 — capture** | `POST /api/gifts/:orderId/capture` | Server-side. Persists the capture id, `paypal_fee`, `net_amount` and payer identity, plus the verbatim payload. |
+| **Webhooks** | `POST /api/webhooks/paypal` | Mounted ahead of the JSON body parser so signature verification sees PayPal's exact bytes. |
+| **Webhook signature verification** | `apps/api/src/paypal/webhooks.ts` | Every notification goes through `verify-webhook-signature`. `cert_url` is checked against PayPal hosts first, so a forged header cannot redirect the certificate lookup. |
+| **Transaction Search** | `GET /api/paypal/reconcile?days=30` | Compares PayPal's own record against our ledger and reports anything we never wrote down. Respects the 31-day cap and the no-fractional-seconds rule. |
+
+Still to come, per [`docs/SPEC.md`](docs/SPEC.md) §4: Subscriptions API for monthly
+giving, and Payouts API for distributions.
+
+### How money is kept honest
+
+- **Integer cents everywhere.** The database never stores a float. Conversion to and
+  from PayPal's decimal strings happens in exactly one module, `apps/api/src/money.ts`,
+  which is unit-tested on both directions including the classic `0.1 + 0.2` case.
+- **One writer, two legs.** The inline capture call and the `PAYMENT.CAPTURE.COMPLETED`
+  webhook both record through `apps/api/src/gifts/record.ts`. Whichever arrives first
+  wins; the other is a no-op. A unique index on `(direction, paypalRef)` is the backstop.
+- **Replay-proof webhooks.** A unique index on `WebhookEvent.paypalEventId` makes a
+  redelivery a no-op. Unverified events are still stored — for forensics — but never
+  acted on.
+- **Audited.** Every order creation and capture writes an `AuditLog` row with actor,
+  action and amounts.
 
 ## How we use AI
 

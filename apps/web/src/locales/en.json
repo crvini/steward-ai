@@ -13,7 +13,9 @@
     "ineligible": "PayPal is not available for this currency right now.",
     "captured": "Gift captured. PayPal reference: {{id}}",
     "cancelled": "Checkout cancelled. Nothing was charged.",
-    "failed": "Something went wrong: {{message}}"
+    "failed": "Something went wrong: {{message}}",
+    "retry": "Reload and try again",
+    "capturing": "Confirming your gift with PayPal…"
   },
   "table": {
     "title": "Recent gifts",

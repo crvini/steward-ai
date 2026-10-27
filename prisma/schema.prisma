@@ -50,6 +50,15 @@ enum TransactionDirection {
   OUT
 }
 
+/// Which code path recorded a ledger row. Both legs are idempotent, so
+/// whichever arrives first wins and the other is a no-op.
+enum TransactionSource {
+  CAPTURE
+  WEBHOOK
+  PAYOUT
+  SEED
+}
+
 enum DistributionStatus {
   PROPOSED
   TREASURER_APPROVED
@@ -138,6 +147,15 @@ model Gift {
   paypalOrderId        String? @unique
   paypalSubscriptionId String? @unique
 
+  /// Payer identity as PayPal reported it on capture. The AI never sees more
+  /// than name and amount (spec §5); card data never reaches us at all.
+  payerEmail String?
+  payerName  String?
+  payerId    String?
+  /// Verbatim PayPal payloads, kept for reconciliation and dispute evidence.
+  rawOrder   Json?
+  rawCapture Json?
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   completedAt DateTime?
@@ -160,6 +178,12 @@ model Transaction {
   currency    String               @default("USD")
   /// PayPal capture id, payout item id, or whatever reference the event carried.
   paypalRef   String?
+  /// PayPal's cut and what actually landed, straight from
+  /// `seller_receivable_breakdown`. Null when PayPal reported no breakdown.
+  feeCents    Int?
+  netCents    Int?
+  /// Which leg wrote this row — the inline capture call or a webhook.
+  source      TransactionSource    @default(CAPTURE)
   description String?
   occurredAt  DateTime
   createdAt   DateTime             @default(now())
@@ -291,13 +315,20 @@ model AuditLog {
 
 /// Idempotency guard: a PayPal event id is processed at most once.
 model WebhookEvent {
-  id              String    @id @default(cuid())
-  paypalEventId   String    @unique
-  type            String
-  payload         Json?
+  id            String  @id @default(cuid())
+  paypalEventId String  @unique
+  type          String
+  /// Verbatim event body as PayPal sent it.
+  payload       Json?
+  /// Result of `verify-webhook-signature`. An unverified event is stored for
+  /// forensics but never acted on.
+  verified      Boolean @default(false)
+  resourceId    String?
+
   receivedAt      DateTime  @default(now())
   processedAt     DateTime?
   processingError String?
 
   @@index([type])
+  @@index([resourceId])
 }

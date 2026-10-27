@@ -22,7 +22,11 @@ export type Order = {
       }[];
     };
   }[];
-  payer?: { email_address?: string; name?: { given_name?: string; surname?: string } };
+  payer?: {
+    payer_id?: string;
+    email_address?: string;
+    name?: { given_name?: string; surname?: string };
+  };
 };
 
 export type CreateOrderInput = {
