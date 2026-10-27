@@ -9,12 +9,15 @@
  */
 import {
   PrismaClient,
+  DistributionItemStatus,
+  DistributionStatus,
   FundSlug,
-  UserRole,
   GiftFrequency,
   GiftStatus,
+  ImpactUpdateStatus,
   TransactionDirection,
   TransactionSource,
+  UserRole,
 } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -259,6 +262,113 @@ async function main() {
       `[seed]   ${f.name.padEnd(14)} gross $${(gross / 100).toFixed(2)}  net $${(net / 100).toFixed(2)}`,
     );
   }
+
+  // ── Repartos de muestra ──────────────────────────────────────────────────
+  //
+  // Sin esto el panel del tesorero y la bandeja del pastor abren vacíos, y un
+  // juez que entra una sola vez no llega a ver de qué trata el producto. Son
+  // deterministas y no llaman a la IA: el texto del razonamiento está escrito
+  // acá a propósito, para que el seed no dependa de la red ni gaste tokens.
+  const missions = funds[FundSlug.MISSIONS];
+  const benevolence = funds[FundSlug.BENEVOLENCE];
+  const treasurerUser = staff.find((u) => u.role === UserRole.TREASURER)!;
+  const pastorUser = staff.find((u) => u.role === UserRole.PASTOR)!;
+
+  const missionRecipients = await prisma.recipient.findMany({
+    where: { fundId: missions.id },
+    orderBy: { name: 'asc' },
+  });
+
+  const executedAt = daysBefore(9);
+  const executed = await prisma.distribution.create({
+    data: {
+      fundId: missions.id,
+      status: DistributionStatus.EXECUTED,
+      aiRationale:
+        'I kept both missionaries at the level they received last month and left $210 in the fund as a reserve. Paying either of them more would have gone over their per-payout limit.',
+      treasurerApprovedBy: treasurerUser.email,
+      treasurerApprovedAt: daysBefore(10),
+      pastorApprovedBy: pastorUser.email,
+      pastorApprovedAt: daysBefore(9),
+      senderBatchId: 'steward-seed-missions',
+      paypalBatchId: 'SEEDBATCH00001',
+      executedAt,
+      createdAt: daysBefore(11),
+      items: {
+        create: missionRecipients.map((r, i) => ({
+          recipientId: r.id,
+          amountCents: i === 0 ? 30_000 : 25_000,
+          status: DistributionItemStatus.SUCCEEDED,
+          paypalItemId: `SEEDITEM0000${i}`,
+        })),
+      },
+    },
+    include: { items: { include: { recipient: true } } },
+  });
+
+  await prisma.transaction.createMany({
+    data: executed.items.map((item) => ({
+      fundId: missions.id,
+      distributionItemId: item.id,
+      direction: TransactionDirection.OUT,
+      amountCents: item.amountCents,
+      paypalRef: `SEEDBATCH00001:${item.id}`,
+      source: TransactionSource.PAYOUT,
+      description: `Payout to ${item.recipient.name}`,
+      occurredAt: executedAt,
+    })),
+  });
+
+  // Reportes de impacto ya aprobados, para que el donante demo tenga algo que
+  // leer al entrar.
+  const missionDonors = await prisma.gift.findMany({
+    where: { fundId: missions.id, status: GiftStatus.COMPLETED },
+    select: { donorId: true },
+    distinct: ['donorId'],
+    take: 4,
+  });
+
+  for (const { donorId } of missionDonors) {
+    const donor = donors.find((d) => d.id === donorId);
+    if (!donor) continue;
+    const es = donor.locale === 'es';
+    await prisma.impactUpdate.create({
+      data: {
+        donorId,
+        distributionId: executed.id,
+        locale: donor.locale,
+        status: ImpactUpdateStatus.SENT,
+        approvedAt: daysBefore(8),
+        sentAt: daysBefore(8),
+        body: es
+          ? 'Tu ofrenda se unió al fondo de Misiones, que este mes repartió $550.00: $300.00 a la familia Ruiz en las Tierras Altas de Guatemala y $250.00 a Kofi Mensah en África Occidental. Gracias por sostener este trabajo mes a mes.'
+          : 'Your gift joined the Missions fund, which distributed $550.00 this month: $300.00 to the Ruiz Family in the Guatemala Highlands and $250.00 to Kofi Mensah in West Africa. Thank you for keeping this work going.',
+      },
+    });
+  }
+
+  // Uno esperando la firma del pastor, para que su bandeja no abra vacía.
+  const benevolenceRecipient = await prisma.recipient.findFirst({
+    where: { fundId: benevolence.id },
+  });
+  if (benevolenceRecipient) {
+    await prisma.distribution.create({
+      data: {
+        fundId: benevolence.id,
+        status: DistributionStatus.TREASURER_APPROVED,
+        aiRationale:
+          'I proposed $400 to the benevolence fund, below its $500 limit, so that something is left for an emergency later in the month. There is no payment history to match, so please check whether this is the right level before approving.',
+        treasurerApprovedBy: treasurerUser.email,
+        treasurerApprovedAt: daysBefore(1),
+        createdAt: daysBefore(1),
+        items: {
+          create: [{ recipientId: benevolenceRecipient.id, amountCents: 40_000 }],
+        },
+      },
+    });
+  }
+
+  console.log(`[seed] distributions: 1 executed with ${missionDonors.length} impact notes, 1 awaiting the pastor`);
 
   console.log('[seed] done');
 }
