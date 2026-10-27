@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import {
   api,
+  ApiError,
   formatCents,
   type ChurchResponse,
   type DistributionRow,
@@ -111,24 +112,49 @@ export default function App() {
           if (last) await showReceipt(last);
         }
       } catch (e) {
-        setError((e as Error).message);
+        setError(explain(e));
       } finally {
         setBooted(true);
       }
     })();
   }, [loadChurch, showReceipt]);
 
+  /**
+   * Turns an API error code into something a person can read. A judge who
+   * sees "user_not_found" learns nothing and assumes the demo is broken.
+   */
+  const explain = (e: unknown) => {
+    const code = e instanceof ApiError ? e.code : (e as Error).message;
+    return t(`error.code.${code}`, { defaultValue: t('error.generic') });
+  };
+
   const signIn = async (picked: SessionUser) => {
     setSigningIn(picked.id);
     setError(null);
     try {
-      const { user: signed } = await api.signIn(picked.id);
+      let id = picked.id;
+
+      // The demo data is reseeded now and then, which gives everyone new ids.
+      // A tab opened before that still holds the old ones, so the first click
+      // would fail with user_not_found. Refetch and match on the email, which
+      // survives a reseed, instead of making the judge reload.
+      try {
+        await api.session();
+        const fresh = await api.roles();
+        setRoles(fresh);
+        const same = fresh.users.find((u) => u.email === picked.email);
+        if (same) id = same.id;
+      } catch {
+        // If the refresh itself fails, try the id we already have.
+      }
+
+      const { user: signed } = await api.signIn(id);
       setUser(signed);
       setTab(TABS_BY_ROLE[signed.role][0]!);
       await i18n.changeLanguage(signed.locale);
       await loadChurch();
     } catch (e) {
-      setError((e as Error).message);
+      setError(explain(e));
     } finally {
       setSigningIn(null);
     }

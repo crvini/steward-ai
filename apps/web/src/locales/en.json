@@ -101,7 +101,18 @@
   "error": {
     "title": "Something broke on this page",
     "body": "This is a demo environment. Reloading usually fixes it.",
-    "reload": "Reload"
+    "reload": "Reload",
+    "generic": "Something did not work. Reloading usually fixes it.",
+    "code": {
+      "user_not_found": "That demo person no longer exists — the demo data was refreshed. Reload the page and try again.",
+      "not_signed_in": "Your session ended. Pick a role again.",
+      "rate_limited": "Too many requests on this demo. Try again in a few minutes.",
+      "paypal_error": "PayPal did not accept that. Nothing was charged.",
+      "wrong_role": "That is not available for this role.",
+      "http_401": "You need to pick a role first.",
+      "http_403": "That is not available for this role.",
+      "http_500": "Something broke on our side. Reloading usually fixes it."
+    }
   },
   "chat": {
     "intro": "Tell me what you would like to give, in English or Spanish.",

@@ -101,7 +101,18 @@
   "error": {
     "title": "Algo se rompió en esta página",
     "body": "Esto es un entorno de demostración. Recargar suele arreglarlo.",
-    "reload": "Recargar"
+    "reload": "Recargar",
+    "generic": "Algo no funcionó. Recargar suele arreglarlo.",
+    "code": {
+      "user_not_found": "Esa persona del demo ya no existe: los datos se resembraron. Recargá la página y probá otra vez.",
+      "not_signed_in": "Tu sesión terminó. Elegí un rol otra vez.",
+      "rate_limited": "Demasiadas peticiones en este demo. Probá de nuevo en unos minutos.",
+      "paypal_error": "PayPal no aceptó eso. No se cobró nada.",
+      "wrong_role": "Eso no está disponible para este rol.",
+      "http_401": "Primero tenés que elegir un rol.",
+      "http_403": "Eso no está disponible para este rol.",
+      "http_500": "Algo se rompió de nuestro lado. Recargar suele arreglarlo."
+    }
   },
   "chat": {
     "intro": "Contame qué te gustaría dar, en español o en inglés.",

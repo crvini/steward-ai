@@ -228,6 +228,20 @@ export type GiftRow = {
   createdAt: string;
 };
 
+/**
+ * An API error that keeps the machine-readable code, so a caller can react to
+ * it instead of matching on prose.
+ */
+export class ApiError extends Error {
+  constructor(
+    readonly code: string,
+    readonly status: number,
+  ) {
+    super(code);
+    this.name = 'ApiError';
+  }
+}
+
 async function json<T>(input: string, init?: RequestInit): Promise<T> {
   const res = await fetch(input, {
     ...init,
@@ -237,7 +251,7 @@ async function json<T>(input: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(body.error ?? `Request failed: ${res.status}`);
+    throw new ApiError(body.error ?? `http_${res.status}`, res.status);
   }
   return (await res.json()) as T;
 }
