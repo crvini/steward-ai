@@ -157,5 +157,15 @@
     "asking": "Looking…",
     "clear": "Clear filter",
     "filterApplied": "Filter applied to the grid"
+  },
+  "impact": {
+    "mine": "What your giving did",
+    "review": "Impact notes",
+    "reviewSubtitle": "The assistant drafts one per donor. Nothing is sent until you approve it.",
+    "draft": "Draft notes for the last distribution",
+    "drafting": "Writing…",
+    "noDrafts": "No drafts waiting.",
+    "approve": "Approve and send",
+    "approveEdited": "Approve my version"
   }
 }

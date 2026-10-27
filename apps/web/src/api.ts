@@ -114,6 +114,17 @@ export type LedgerFilter = {
   minAmountCents?: number;
 };
 
+export type ImpactUpdate = {
+  id: string;
+  donor?: string;
+  fund: string;
+  locale?: string;
+  body: string;
+  status?: string;
+  createdAt?: string;
+  sentAt?: string;
+};
+
 export type Receipt = {
   id: string;
   donor: string;
@@ -191,6 +202,17 @@ export const api = {
     ),
   subscriptions: () => json<{ subscriptions: SubscriptionRow[] }>('/api/subscriptions'),
   ledger: () => json<{ rows: LedgerRow[] }>('/api/ledger'),
+  draftImpact: (distributionId: string) =>
+    json<{ drafted: number }>(`/api/impact/${encodeURIComponent(distributionId)}/draft`, {
+      method: 'POST',
+    }),
+  impactReview: () => json<{ updates: ImpactUpdate[] }>('/api/impact/review'),
+  approveImpact: (id: string, body?: string) =>
+    json<{ id: string; status: string }>(`/api/impact/${encodeURIComponent(id)}/approve`, {
+      method: 'POST',
+      body: JSON.stringify(body === undefined ? {} : { body }),
+    }),
+  myImpact: () => json<{ updates: ImpactUpdate[] }>('/api/impact/mine'),
   askLedger: (question: string) =>
     json<{ filter: LedgerFilter; answer: string }>('/api/ledger/ask', {
       method: 'POST',

@@ -5,6 +5,7 @@ import {
   api,
   formatCents,
   type ChurchResponse,
+  type DistributionRow,
   type GiftRow,
   type Receipt,
   type RolesResponse,
@@ -17,6 +18,8 @@ import { RoleChooser } from './RoleChooser';
 import { DemoBanner } from './DemoBanner';
 import { Distributions } from './Distributions';
 import { LedgerGrid } from './LedgerGrid';
+import { MyImpact } from './MyImpact';
+import { ImpactReview } from './ImpactReview';
 
 /** Survives a reload so a refreshed receipt is not lost. */
 const LAST_GIFT_KEY = 'steward:lastGiftId';
@@ -28,6 +31,7 @@ export default function App() {
   const [roles, setRoles] = useState<RolesResponse | null>(null);
   const [church, setChurch] = useState<ChurchResponse | null>(null);
   const [gifts, setGifts] = useState<GiftRow[]>([]);
+  const [distributions, setDistributions] = useState<DistributionRow[]>([]);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [signingIn, setSigningIn] = useState<string | null>(null);
   const [booted, setBooted] = useState(false);
@@ -37,6 +41,9 @@ export default function App() {
     const [churchData, giftData] = await Promise.all([api.church(), api.gifts()]);
     setChurch(churchData);
     setGifts(giftData.gifts);
+    // Solo el tesorero y el pastor pueden leerlos; para el donante da 403 y
+    // eso no es un error que valga la pena mostrar.
+    setDistributions(await api.distributions().then((d) => d.distributions).catch(() => []));
   }, []);
 
   const showReceipt = useCallback(async (giftId: string) => {
@@ -225,15 +232,19 @@ export default function App() {
             ) : (
               <>
                 <Distributions church={church} user={user} onChanged={() => void loadChurch()} />
+                {user.role === 'TREASURER' && <ImpactReview distributions={distributions} />}
                 <LedgerGrid locale={i18n.language} />
               </>
             )}
 
             {user.role === 'DONOR' && (
-              <section>
-                <h2 className="mb-3 text-xl font-semibold">{t('table.title')}</h2>
-                <GiftsTable gifts={gifts} />
-              </section>
+              <>
+                <MyImpact />
+                <section>
+                  <h2 className="mb-3 text-xl font-semibold">{t('table.title')}</h2>
+                  <GiftsTable gifts={gifts} />
+                </section>
+              </>
             )}
           </>
         )}

@@ -98,6 +98,7 @@ Everything below is wired to the live PayPal sandbox — no mocks, no stubs.
 | **Webhooks** | `POST /api/webhooks/paypal` | Mounted ahead of the JSON body parser so signature verification sees PayPal's exact bytes. |
 | **Webhook signature verification** | `apps/api/src/paypal/webhooks.ts` | Every notification goes through `verify-webhook-signature`. `cert_url` is checked against PayPal hosts first, so a forged header cannot redirect the certificate lookup. |
 | **Transaction Search** | `GET /api/paypal/reconcile?days=30` | Compares PayPal's own record against our ledger and reports anything we never wrote down. Respects the 31-day cap and the no-fractional-seconds rule. |
+| **Payouts API v1** | `POST /api/distributions/:id/execute` | Distributions to missionaries and the benevolence fund. One `sender_batch_id` per distribution, so a retried execute cannot pay twice. **The only path to Payouts in the codebase**, and the AI layer cannot import it. |
 
 Webhook events handled: `PAYMENT.CAPTURE.COMPLETED`, `BILLING.SUBSCRIPTION.ACTIVATED`,
 `BILLING.SUBSCRIPTION.CANCELLED` / `EXPIRED` / `SUSPENDED`, and `PAYMENT.SALE.COMPLETED`
@@ -126,7 +127,60 @@ dollars. The API rejects cents on a monthly gift rather than quietly rounding.
 
 ## How we use AI
 
-> To be completed — see [`docs/SPEC.md`](docs/SPEC.md) §5.
+Anthropic's Claude, through the official SDK, with tool use. Four agents, each
+with a job small enough to describe in a sentence.
+
+| Agent | Model | What it does | What it cannot do |
+|---|---|---|---|
+| **Giving agent** | Sonnet | A donor writes "I want to give $50 monthly to missions" in either language; it produces a proposal and streams its reply | Charge anything. Its tools are `list_funds` and `propose_gift`, and neither creates a record |
+| **Distribution agent** | Sonnet | Reads balances, approved recipients and what each received last time, and proposes how to split a fund with a written rationale | Pay anyone, or skip a rule. Every line goes through the rules engine |
+| **Treasurer assistant** | Sonnet | Answers questions about the ledger and filters the grid to match | Write SQL. Its only door to the data is a typed five-field filter, validated with Zod on the way in and again on the way out |
+| **Impact writer** | Haiku | After a distribution, drafts one short note per donor about what their giving did | Reach a donor. Every note waits for a human to approve or rewrite it |
+
+### The rule the whole project is built on
+
+**The AI proposes, deterministic code decides, two people approve.**
+
+`apps/api/src/rules/distribution.ts` is the part that decides. It is pure — no
+database, no network, no clock — so every rule is testable and none can be
+skipped by an unusual code path. It is covered by 15 unit tests: recipient
+whitelist, wrong fund, per-recipient and global limits, insufficient balance,
+non-positive amounts, fractional cents, and paying the same person twice.
+
+Two deliberate choices in it:
+
+- **Blocked lines are kept and shown in red with the reason**, not silently
+  dropped. The treasurer has to see what the assistant tried to do and which
+  rule refused it. Hiding that would hide exactly what needs reviewing.
+- **One bad line blocks the whole batch.** "Mostly fine" does not get paid.
+
+Then `POST /api/distributions/:id/execute` — the only code that calls Payouts —
+requires the treasurer's signature *and* the pastor's, refuses when the same
+person tries to hold both keys, and **re-runs the rules at execution time**,
+because balances move between approval and payment.
+
+### Guardrails you can check
+
+- Rate limited per signed-in user, because the demo is public and the key is real.
+- Message length and conversation length capped — cost control, not style.
+- Every proposal, approval, rejection and execution lands in `AuditLog` with
+  who and when.
+- The AI is given names and amounts, never card data; PayPal handles that.
+- Prompt caching on every system prompt (visible as `cached=…` in the logs).
+
+## Testing
+
+```bash
+pnpm lint && pnpm typecheck && pnpm test   # 45 unit tests
+cd e2e && npm install && npm test          # 38 end-to-end, Playwright
+cd e2e && npm run test:prod                # the same suite against production
+```
+
+The end-to-end suite runs on a single worker on purpose: in parallel it
+produced failures that would not reproduce in isolation, and a flaky suite
+hides the real failures. It cannot complete a payment — that needs a PayPal
+sandbox buyer login, and we do not automate credentials — so it goes as far as
+the checkout taking over.
 
 ## License
 

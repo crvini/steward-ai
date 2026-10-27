@@ -157,5 +157,15 @@
     "asking": "Buscando…",
     "clear": "Quitar filtro",
     "filterApplied": "Filtro aplicado a la tabla"
+  },
+  "impact": {
+    "mine": "Lo que logró tu ofrenda",
+    "review": "Reportes de impacto",
+    "reviewSubtitle": "El asistente redacta uno por donante. No se envía nada hasta que lo apruebes.",
+    "draft": "Redactar los del último reparto",
+    "drafting": "Escribiendo…",
+    "noDrafts": "No hay borradores pendientes.",
+    "approve": "Aprobar y enviar",
+    "approveEdited": "Aprobar mi versión"
   }
 }
