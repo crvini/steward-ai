@@ -1,5 +1,8 @@
 # Steward AI
 
+[![CI](https://github.com/crvini/steward-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/crvini/steward-ai/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 **Generosity with transparency — from the moment someone gives to the moment they see the fruit.**
 
 Steward AI is an AI generosity assistant for churches. Money comes in through PayPal,
@@ -31,7 +34,7 @@ never learn what their gift did. Steward AI closes that loop.
 
 ```bash
 # 1. Clone
-git clone https://github.com/<user>/steward-ai.git
+git clone https://github.com/crvini/steward-ai.git
 cd steward-ai
 
 # 2. Configure environment
