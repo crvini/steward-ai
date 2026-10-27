@@ -328,6 +328,14 @@ async function main() {
     take: 4,
   });
 
+  // The demo persona must always be among them: she is the donor the judges
+  // sign in as, and an empty "what your giving did" is the one view that
+  // cannot afford to be empty.
+  const demoDonor = donors[0]!;
+  if (!missionDonors.some((d) => d.donorId === demoDonor.id)) {
+    missionDonors.unshift({ donorId: demoDonor.id });
+  }
+
   for (const { donorId } of missionDonors) {
     const donor = donors.find((d) => d.id === donorId);
     if (!donor) continue;
