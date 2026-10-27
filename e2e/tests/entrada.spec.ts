@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { PERSONAS, cerrarSesion, entrarComo, irAPestaña, modoManual } from './ayudas';
+import { PERSONAS, cerrarSesion, entrarComo, modoManual } from './ayudas';
 
 test.beforeEach(async ({ page }) => {
   await cerrarSesion(page);
