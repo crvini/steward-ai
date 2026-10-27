@@ -260,7 +260,7 @@ export function LedgerGrid({ locale }: { locale: string }) {
   };
 
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-xl font-bold">{t('grid.title')}</h2>
         <div className="flex items-center gap-2">

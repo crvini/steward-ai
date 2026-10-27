@@ -57,7 +57,7 @@ export function PastorWeek({ user, currency }: { user: SessionUser; currency: st
   const firstName = user.name.replace(/^Pastor\s+/i, '').split(' ')[0] ?? user.name;
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <Card className="p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h2 className="font-display text-2xl font-extrabold">
@@ -89,7 +89,7 @@ export function PastorWeek({ user, currency }: { user: SessionUser; currency: st
         )}
       </Card>
 
-      <aside className="flex flex-col gap-4">
+      <aside className="flex min-w-0 flex-col gap-4">
         {stats && (
           <Card className="p-5">
             <h3 className="font-display text-lg font-bold">{t('pastor.monthSoFar')}</h3>

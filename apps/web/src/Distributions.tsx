@@ -149,7 +149,10 @@ export function Distributions({
 
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <div className="flex flex-col gap-4">
+      {/* min-w-0: por defecto un hijo de flex/grid tiene min-width:auto y
+          crece hasta su contenido, así que una tabla ancha empuja la página
+          entera en vez de hacer scroll dentro de su propio contenedor. */}
+      <div className="flex min-w-0 flex-col gap-4">
         {error && (
           <p className="rounded-xl border border-fund-missions/30 bg-fund-missions/5 px-4 py-3 text-sm text-fund-missions">
             {error}
@@ -187,7 +190,10 @@ export function Distributions({
                 </div>
               )}
 
-              <table className="mt-6 w-full text-left text-sm">
+              {/* La tabla hace su propio scroll: en un teléfono, dejar que
+                  empuje la página entera inutiliza el resto de la pantalla. */}
+              <div className="mt-6 overflow-x-auto">
+                <table className="w-full min-w-[26rem] text-left text-sm">
                 <thead className="border-b border-line text-xs uppercase tracking-wide text-ink-muted">
                   <tr>
                     <th className="pb-2 font-medium">{t('dist.recipient')}</th>
@@ -267,8 +273,9 @@ export function Distributions({
                       })}
                     </td>
                   </tr>
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
 
               <div className="mt-6 flex flex-wrap gap-2">
                 {canSign && (
@@ -386,7 +393,7 @@ export function Distributions({
         )}
       </div>
 
-      <aside className="flex flex-col gap-4">
+      <aside className="flex min-w-0 flex-col gap-4">
         {detail && <TwoKeys detail={detail} />}
 
         {detail && (
