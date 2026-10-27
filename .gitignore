@@ -37,6 +37,8 @@ prisma/*.db-journal
 docs/PLAN_PARA_GANAR.md
 docs/MEJORAS_INTERFAZ.md
 docs/MEJORAS-UI.md
+docs/ESTADO_DEL_PROYECTO.md
+docs/design/
 
 # Playwright
 e2e/test-results/
