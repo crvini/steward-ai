@@ -32,3 +32,14 @@ export async function ofrendaCompletada(request: APIRequestContext) {
   };
   return gifts.find((g) => g.status === 'COMPLETED');
 }
+
+/**
+ * Cambia la tarjeta de dar al formulario manual.
+ *
+ * El chat es el modo por defecto desde el Bloque C, así que los controles
+ * manuales (donante, fondo, frecuencia, monto) están ocultos hasta que se
+ * pide "Elegir".
+ */
+export async function modoManual(page: Page) {
+  await page.getByRole('button', { name: /^elegir$/i }).click();
+}

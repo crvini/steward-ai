@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { PERSONAS, cerrarSesion, entrarComo } from './ayudas';
+import { PERSONAS, cerrarSesion, entrarComo, modoManual } from './ayudas';
 
 test.beforeEach(async ({ page }) => {
   await cerrarSesion(page);
@@ -22,6 +22,7 @@ test('la pantalla de entrada ofrece las tres personas, sin contraseña', async (
 
 test('entrar como miembro deja la tarjeta de dar lista', async ({ page }) => {
   await entrarComo(page, PERSONAS.miembro.nombre);
+  await modoManual(page);
 
   const tarjeta = page.locator('section', { hasText: /dar a un fondo/i }).first();
   await expect(tarjeta.getByRole('heading', { name: /dar a un fondo/i })).toBeVisible();

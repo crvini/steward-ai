@@ -8,7 +8,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { api, formatCents, type ChurchResponse, type SessionUser } from './api';
+import {
+  api,
+  formatCents,
+  type ChurchResponse,
+  type GiftProposal,
+  type SessionUser,
+} from './api';
+import { GivingChat } from './GivingChat';
 import type { PayPalSdkInstance } from './types/paypal';
 
 type Frequency = 'ONE_TIME' | 'MONTHLY';
@@ -124,10 +131,14 @@ export function GiveCard({
   user: SessionUser;
   onGiftCaptured: (giftId: string) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [fundId, setFundId] = useState(church.funds[0]?.id ?? '');
   const [amount, setAmount] = useState(50);
   const [frequency, setFrequency] = useState<Frequency>('ONE_TIME');
+  const [mode, setMode] = useState<'chat' | 'manual'>('chat');
+  // Set when the agent proposes. The card is the only thing that can start a
+  // payment; the agent just fills it in.
+  const [proposal, setProposal] = useState<GiftProposal | null>(null);
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
   const [result, setResult] = useState<string | null>(null);
   // The capture is a round trip to PayPal and takes a second or two. Without
@@ -244,10 +255,63 @@ export function GiveCard({
 
   return (
     <section className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-semibold">{t('give.title')}</h2>
-      <p className="mt-1 text-sm text-neutral-600">{t('give.subtitle')}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold">{t('give.title')}</h2>
+          <p className="mt-1 text-sm text-neutral-600">{t('give.subtitle')}</p>
+        </div>
+        <div className="flex gap-1 rounded-lg bg-neutral-100 p-1 text-xs font-medium">
+          {(['chat', 'manual'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              className={`rounded px-3 py-1.5 ${
+                mode === m ? 'bg-white shadow-sm' : 'text-neutral-600'
+              }`}
+            >
+              {t(`give.mode.${m}`)}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+      {mode === 'chat' && (
+        <div className="mt-4">
+          <GivingChat
+            onProposal={(p) => {
+              // The agent fills the form; the person still presses the button.
+              setFundId(p.fundId);
+              setAmount(p.amountCents / 100);
+              setFrequency(p.frequency);
+              setProposal(p);
+            }}
+          />
+        </div>
+      )}
+
+      {proposal && (
+        <div
+          data-testid="ai-proposal"
+          className="mt-4 rounded-lg border-2 border-blue-200 bg-blue-50 p-4"
+        >
+          <p className="text-xs font-medium uppercase tracking-wide text-blue-700">
+            {t('give.proposedByAi')}
+          </p>
+          <p className="mt-1 text-lg font-semibold">
+            {formatCents(proposal.amountCents, church.church.currency, i18n.language)}
+            {' · '}
+            {proposal.fundName}
+            {' · '}
+            {t(proposal.frequency === 'MONTHLY' ? 'give.monthly' : 'give.oneTime')}
+          </p>
+          <p className="mt-1 text-xs text-blue-900">{t('give.proposalNote')}</p>
+        </div>
+      )}
+
+      <div
+        className={`mt-5 grid gap-4 sm:grid-cols-2 ${mode === 'chat' ? 'hidden' : ''}`}
+      >
         <div className="flex flex-col gap-1 text-sm">
           <span className="font-medium">{t('give.donor')}</span>
           <p className="rounded border border-neutral-200 bg-neutral-50 px-3 py-2 text-neutral-700">
@@ -271,11 +335,11 @@ export function GiveCard({
         </label>
       </div>
 
-      {selectedFund?.description && (
+      {mode === 'manual' && selectedFund?.description && (
         <p className="mt-2 text-xs text-neutral-500">{selectedFund.description}</p>
       )}
 
-      <div className="mt-5">
+      <div className={`mt-5 ${mode === 'chat' ? 'hidden' : ''}`}>
         <span className="text-sm font-medium">{t('give.frequency')}</span>
         <div className="mt-2 flex gap-2" role="group" aria-label={t('give.frequency')}>
           {(['ONE_TIME', 'MONTHLY'] as const).map((f) => (
@@ -300,7 +364,7 @@ export function GiveCard({
         </div>
       </div>
 
-      <div className="mt-5">
+      <div className={`mt-5 ${mode === 'chat' ? 'hidden' : ''}`}>
         <span className="text-sm font-medium">{t('give.amount')}</span>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {PRESET_AMOUNTS.map((preset) => (

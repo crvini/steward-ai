@@ -4,7 +4,15 @@ import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/coverage/**', '**/node_modules/**', '**/*.config.js'],
+    ignores: [
+      '**/dist/**',
+      '**/coverage/**',
+      '**/node_modules/**',
+      '**/*.config.js',
+      // Artefactos generados por Playwright: no son código nuestro.
+      'e2e/playwright-report/**',
+      'e2e/test-results/**',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

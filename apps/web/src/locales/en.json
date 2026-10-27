@@ -20,7 +20,13 @@
     "frequency": "How often",
     "oneTime": "Once",
     "monthly": "Every month",
-    "monthlyNote": "Monthly gifts are whole dollars."
+    "monthlyNote": "Monthly gifts are whole dollars.",
+    "mode": {
+      "chat": "Just tell us",
+      "manual": "Choose"
+    },
+    "proposedByAi": "Proposed by the assistant",
+    "proposalNote": "Nothing has been charged. Press the PayPal button below to confirm."
   },
   "table": {
     "title": "Recent gifts",
@@ -89,5 +95,17 @@
     "title": "Something broke on this page",
     "body": "This is a demo environment. Reloading usually fixes it.",
     "reload": "Reload"
+  },
+  "chat": {
+    "intro": "Tell me what you would like to give, in English or Spanish.",
+    "example1": "I want to give $50 to missions",
+    "example2": "Quiero dar $100 al mes para construcción",
+    "example3": "Something for families in need",
+    "placeholder": "Write what you would like to give…",
+    "send": "Send",
+    "thinking": "Thinking",
+    "disclaimer": "The assistant can only propose. Nothing is charged until you press the PayPal button.",
+    "failed": "The assistant could not answer: {{message}}",
+    "rateLimited": "Too many requests on this demo. Try again in about {{minutes}} minutes."
   }
 }

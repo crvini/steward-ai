@@ -20,7 +20,13 @@
     "frequency": "Cada cuánto",
     "oneTime": "Una vez",
     "monthly": "Cada mes",
-    "monthlyNote": "Las ofrendas mensuales van en dólares enteros."
+    "monthlyNote": "Las ofrendas mensuales van en dólares enteros.",
+    "mode": {
+      "chat": "Decilo y ya",
+      "manual": "Elegir"
+    },
+    "proposedByAi": "Propuesto por el asistente",
+    "proposalNote": "Todavía no se ha cobrado nada. Confirmá con el botón de PayPal de abajo."
   },
   "table": {
     "title": "Ofrendas recientes",
@@ -89,5 +95,17 @@
     "title": "Algo se rompió en esta página",
     "body": "Esto es un entorno de demostración. Recargar suele arreglarlo.",
     "reload": "Recargar"
+  },
+  "chat": {
+    "intro": "Contame qué te gustaría dar, en español o en inglés.",
+    "example1": "Quiero dar $50 para misiones",
+    "example2": "Quiero dar $100 al mes para construcción",
+    "example3": "Algo para familias necesitadas",
+    "placeholder": "Escribí qué te gustaría dar…",
+    "send": "Enviar",
+    "thinking": "Pensando",
+    "disclaimer": "El asistente solo puede proponer. No se cobra nada hasta que presionés el botón de PayPal.",
+    "failed": "El asistente no pudo responder: {{message}}",
+    "rateLimited": "Demasiadas peticiones en este demo. Probá de nuevo en unos {{minutes}} minutos."
   }
 }

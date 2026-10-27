@@ -30,6 +30,9 @@ const envSchema = z.object({
   WEB_URL: z.string().url().default('http://localhost:5173'),
   SESSION_SECRET: z.string().min(1),
 
+  /** AI requests allowed per signed-in user (or IP) per hour on the demo. */
+  AI_RATE_LIMIT_PER_HOUR: z.coerce.number().int().positive().default(30),
+
   MAX_PAYOUT_ITEM_USD: z.coerce.number().positive().default(500),
   MAX_PAYOUT_BATCH_USD: z.coerce.number().positive().default(2000),
 });

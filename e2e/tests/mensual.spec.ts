@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { PERSONAS, cerrarSesion, entrarComo } from './ayudas';
+import { PERSONAS, cerrarSesion, entrarComo, modoManual } from './ayudas';
 
 test.beforeEach(async ({ page }) => {
   await cerrarSesion(page);
@@ -8,6 +8,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('se puede elegir entre una vez y cada mes', async ({ page }) => {
+  await modoManual(page);
   const tarjeta = page.locator('section', { hasText: /dar a un fondo/i }).first();
 
   await expect(tarjeta.getByRole('button', { name: /una vez/i })).toBeVisible();
@@ -19,6 +20,7 @@ test('se puede elegir entre una vez y cada mes', async ({ page }) => {
 });
 
 test('elegir mensual redondea un monto con centavos a dólares enteros', async ({ page }) => {
+  await modoManual(page);
   const tarjeta = page.locator('section', { hasText: /dar a un fondo/i }).first();
   const monto = tarjeta.getByRole('spinbutton');
 

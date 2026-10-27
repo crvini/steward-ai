@@ -130,5 +130,75 @@ export const api = {
     ),
 };
 
+export type GiftProposal = {
+  fundId: string;
+  fundName: string;
+  amountCents: number;
+  frequency: 'ONE_TIME' | 'MONTHLY';
+};
+
+export type AgentEvent =
+  | { type: 'text'; text: string }
+  | { type: 'proposal'; proposal: GiftProposal }
+  | { type: 'done' }
+  | { type: 'error'; message: string };
+
+/**
+ * Streams the giving agent's reply. Server-Sent Events over fetch rather than
+ * EventSource, because EventSource cannot POST and the conversation has to go
+ * in the body.
+ */
+export async function* streamGivingAgent(
+  messages: { role: 'user' | 'assistant'; content: string }[],
+  signal?: AbortSignal,
+): AsyncGenerator<AgentEvent> {
+  const res = await fetch('/api/ai/giving', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages }),
+    signal,
+  });
+
+  if (!res.ok || !res.body) {
+    const body = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      retryAfterSeconds?: number;
+    };
+    yield {
+      type: 'error',
+      message:
+        body.error === 'rate_limited'
+          ? `rate_limited:${body.retryAfterSeconds ?? 0}`
+          : (body.error ?? `HTTP ${res.status}`),
+    };
+    return;
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    // SSE frames are separated by a blank line; a partial frame waits.
+    const frames = buffer.split('\n\n');
+    buffer = frames.pop() ?? '';
+
+    for (const frame of frames) {
+      const line = frame.split('\n').find((l) => l.startsWith('data: '));
+      if (!line) continue;
+      try {
+        yield JSON.parse(line.slice(6)) as AgentEvent;
+      } catch {
+        // A truncated frame is not worth killing the conversation over.
+      }
+    }
+  }
+}
+
 export const formatCents = (cents: number, currency = 'USD', locale = 'en-US') =>
   (cents / 100).toLocaleString(locale, { style: 'currency', currency });
