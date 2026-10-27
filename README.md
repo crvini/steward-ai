@@ -26,9 +26,27 @@ never learn what their gift did. Steward AI closes that loop.
   on what was actually distributed.
 - **Bilingual (EN/ES)** from day one.
 
-## Getting started
+## For the judges
 
-> Work in progress — this section is completed as the project is built.
+**Live demo: <https://steward.e-ministry.online>**
+
+Pick a role on the entry screen. There is no sign-up and no password — one
+click and you are in, and you can switch roles from the top bar at any time.
+
+| Role | What to look at |
+|---|---|
+| **Maria Lopez**, member | Type *"Quiero dar $100 al mes para construcción"* or *"I want to give $50 to missions"*. The assistant proposes; the gold button is the only thing that charges. Then open **My impact**. |
+| **Daniel Ruiz**, treasurer | **Distributions** shows the AI's plan with a line blocked in red and every rule it checked. **Books** answers questions in plain language and filters the grid to match. **Audit** compares our ledger against PayPal. |
+| **Pastor Samuel Ortiz** | **This week** is a brief written by the AI from the week's books. **Approvals** is the second key: nothing is paid until he signs. |
+
+The fastest way to see the whole argument: as the treasurer, open
+**Distributions** and approve. Then switch to the pastor in the top bar and
+approve again. The money only moves after the second signature.
+
+To actually pay at the checkout, sign in with a **PayPal sandbox buyer
+account** from your developer dashboard. No real money moves.
+
+## Getting started
 
 **Requirements:** Node 22+, pnpm 9+, Docker (for PostgreSQL).
 
@@ -171,10 +189,30 @@ because balances move between approval and payment.
 ## Testing
 
 ```bash
-pnpm lint && pnpm typecheck && pnpm test   # 45 unit tests
-cd e2e && npm install && npm test          # 38 end-to-end, Playwright
+pnpm lint && pnpm typecheck && pnpm test   # 49 unit tests
+cd e2e && npm install && npm test          # 56 end-to-end, Playwright
 cd e2e && npm run test:prod                # the same suite against production
+cd e2e && npm run test:escritura           # creates a real sandbox order
 ```
+
+What the suites defend, beyond "it renders":
+
+- **The guardrail.** 15 unit tests on the rules engine alone — recipient
+  whitelist, wrong fund, per-recipient and global limits, insufficient
+  balance, fractional cents, paying someone twice. Plus tests that every rule
+  is *reported* whether it passed or failed, because a panel that only lists
+  failures leaves the reader guessing what else was checked.
+- **That the AI cannot pay.** A test asserts that asking the assistant for a
+  gift creates no record at all.
+- **That the screen cannot lie about the limits.** A test compares what the
+  pastor's "Your rules" panel displays against what the engine reports.
+- **That signatures mean something.** Forging a session payload, reusing a
+  valid signature, the pastor signing first, one person holding both keys —
+  all covered.
+- **Webhooks.** Unsigned events, a `cert_url` on a lookalike host
+  (`paypal.com.evil.example`), and redelivery of the same event.
+- **It does not break on a phone.** Five viewport tests at 390px, one per
+  role, that fail on any horizontal scroll.
 
 The end-to-end suite runs on a single worker on purpose: in parallel it
 produced failures that would not reproduce in isolation, and a flaky suite
