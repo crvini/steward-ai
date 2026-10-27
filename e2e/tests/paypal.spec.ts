@@ -72,6 +72,24 @@ test('un cert_url que no es de PayPal tampoco pasa', async ({ request }) => {
   expect(res.status()).toBe(401);
 });
 
+test('los webhooks de suscripción tampoco pasan sin firma', async ({ request }) => {
+  for (const tipo of [
+    'BILLING.SUBSCRIPTION.ACTIVATED',
+    'BILLING.SUBSCRIPTION.CANCELLED',
+    'PAYMENT.SALE.COMPLETED',
+  ]) {
+    const res = await request.post('/api/webhooks/paypal', {
+      headers: { 'Content-Type': 'application/json' },
+      data: {
+        id: `WH-E2E-${tipo}-${Date.now()}`,
+        event_type: tipo,
+        resource: { id: 'FALSO', amount: { value: '999.00', currency_code: 'USD' } },
+      },
+    });
+    expect(res.status(), `${tipo} debería rechazarse`).toBe(401);
+  }
+});
+
 test('/health responde sano con los tres servicios', async ({ request }) => {
   const res = await request.get('/health');
   expect(res.status()).toBe(200);

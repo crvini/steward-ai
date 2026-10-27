@@ -16,7 +16,11 @@
     "cancelled": "Pago cancelado. No se cobró nada.",
     "failed": "Algo salió mal: {{message}}",
     "retry": "Recargar y reintentar",
-    "capturing": "Confirmando tu ofrenda con PayPal…"
+    "capturing": "Confirmando tu ofrenda con PayPal…",
+    "frequency": "Cada cuánto",
+    "oneTime": "Una vez",
+    "monthly": "Cada mes",
+    "monthlyNote": "Las ofrendas mensuales van en dólares enteros."
   },
   "table": {
     "title": "Ofrendas recientes",
@@ -76,6 +80,14 @@
     "reference": "Referencia de PayPal",
     "copy": "Copiar",
     "copied": "Copiado",
-    "giveAgain": "Dar otra vez"
+    "giveAgain": "Dar otra vez",
+    "monthlyTitle": "Tu ofrenda mensual quedó activa",
+    "monthlySubtitle": "PayPal la cobrará cada mes hasta que la detengas.",
+    "perMonth": "cada mes"
+  },
+  "error": {
+    "title": "Algo se rompió en esta página",
+    "body": "Esto es un entorno de demostración. Recargar suele arreglarlo.",
+    "reload": "Recargar"
   }
 }

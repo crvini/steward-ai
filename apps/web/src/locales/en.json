@@ -16,7 +16,11 @@
     "cancelled": "Checkout cancelled. Nothing was charged.",
     "failed": "Something went wrong: {{message}}",
     "retry": "Reload and try again",
-    "capturing": "Confirming your gift with PayPal…"
+    "capturing": "Confirming your gift with PayPal…",
+    "frequency": "How often",
+    "oneTime": "Once",
+    "monthly": "Every month",
+    "monthlyNote": "Monthly gifts are whole dollars."
   },
   "table": {
     "title": "Recent gifts",
@@ -76,6 +80,14 @@
     "reference": "PayPal reference",
     "copy": "Copy",
     "copied": "Copied",
-    "giveAgain": "Give again"
+    "giveAgain": "Give again",
+    "monthlyTitle": "Your monthly gift is set up",
+    "monthlySubtitle": "PayPal will charge this every month until you stop it.",
+    "perMonth": "every month"
+  },
+  "error": {
+    "title": "Something broke on this page",
+    "body": "This is a demo environment. Reloading usually fixes it.",
+    "reload": "Reload"
   }
 }

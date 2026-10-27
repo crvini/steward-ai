@@ -9,7 +9,12 @@
  * and retrying will not fix a payload we have already stored and rejected.
  */
 import { Router, raw } from 'express';
-import { Prisma, TransactionSource } from '@prisma/client';
+import {
+  GiftStatus,
+  Prisma,
+  TransactionDirection,
+  TransactionSource,
+} from '@prisma/client';
 
 import { prisma } from '../db/client.js';
 import { readTransmissionHeaders, verifyWebhookSignature } from '../paypal/webhooks.js';
@@ -33,6 +38,13 @@ type PayPalEvent = {
       net_amount?: { value: string };
     };
     supplementary_data?: { related_ids?: { order_id?: string } };
+    /** PAYMENT.SALE.COMPLETED carries the subscription here. */
+    billing_agreement_id?: string;
+    /** BILLING.SUBSCRIPTION.* resources. */
+    plan_id?: string;
+    quantity?: string;
+    subscriber?: { email_address?: string };
+    billing_info?: { next_billing_time?: string };
   };
 };
 
@@ -88,6 +100,114 @@ async function handleCaptureCompleted(event: PayPalEvent): Promise<string> {
     : `already recorded by the capture call`;
 }
 
+/**
+ * The donor finished approving at PayPal. The Gift moves to ACTIVE; the money
+ * itself arrives later as PAYMENT.SALE.COMPLETED.
+ */
+async function handleSubscriptionActivated(event: PayPalEvent): Promise<string> {
+  const resource = event.resource;
+  if (!resource?.id) return 'subscription resource has no id';
+
+  const gift =
+    (resource.custom_id
+      ? await prisma.gift.findUnique({ where: { id: resource.custom_id } })
+      : null) ?? (await prisma.gift.findUnique({ where: { paypalSubscriptionId: resource.id } }));
+
+  if (!gift) return `no gift for subscription ${resource.id}`;
+
+  await prisma.gift.update({
+    where: { id: gift.id },
+    data: {
+      status: GiftStatus.ACTIVE,
+      completedAt: gift.completedAt ?? new Date(),
+      paypalSubscriptionId: gift.paypalSubscriptionId ?? resource.id,
+      payerEmail: resource.subscriber?.email_address ?? gift.payerEmail,
+    },
+  });
+  await prisma.auditLog.create({
+    data: {
+      actor: 'system:paypal-webhook',
+      action: 'gift.subscription_activated',
+      entity: 'Gift',
+      entityId: gift.id,
+      payload: { subscriptionId: resource.id },
+    },
+  });
+
+  return `subscription ${resource.id} active for gift ${gift.id}`;
+}
+
+/** The donor stopped giving, or PayPal stopped the agreement. */
+async function handleSubscriptionEnded(event: PayPalEvent, status: GiftStatus): Promise<string> {
+  const resource = event.resource;
+  if (!resource?.id) return 'subscription resource has no id';
+
+  const gift = await prisma.gift.findUnique({ where: { paypalSubscriptionId: resource.id } });
+  if (!gift) return `no gift for subscription ${resource.id}`;
+
+  await prisma.gift.update({ where: { id: gift.id }, data: { status } });
+  return `subscription ${resource.id} -> ${status}`;
+}
+
+/**
+ * One monthly charge actually went through. Each is its own ledger row against
+ * the same Gift, idempotent on the sale id so a redelivery cannot double-count.
+ */
+async function handleRecurringPayment(event: PayPalEvent): Promise<string> {
+  const resource = event.resource;
+  if (!resource?.id || !resource.amount) return 'sale resource incomplete';
+
+  const subscriptionId = resource.billing_agreement_id;
+  const gift =
+    (resource.custom_id
+      ? await prisma.gift.findUnique({ where: { id: resource.custom_id } })
+      : null) ??
+    (subscriptionId
+      ? await prisma.gift.findUnique({ where: { paypalSubscriptionId: subscriptionId } })
+      : null);
+
+  // A one-off sale with no subscription behind it is not ours to record here.
+  if (!gift) return `no gift for sale ${resource.id} (subscription ${subscriptionId ?? '-'})`;
+
+  const amountCents = payPalValueToCents(resource.amount.value);
+  const occurredAt = resource.create_time ? new Date(resource.create_time) : new Date();
+
+  const existing = await prisma.transaction.findFirst({
+    where: { direction: TransactionDirection.IN, paypalRef: resource.id },
+    select: { id: true },
+  });
+  if (existing) return `sale ${resource.id} already recorded`;
+
+  const fee = resource.seller_receivable_breakdown?.paypal_fee?.value;
+  const net = resource.seller_receivable_breakdown?.net_amount?.value;
+
+  await prisma.transaction.create({
+    data: {
+      fundId: gift.fundId,
+      giftId: gift.id,
+      direction: TransactionDirection.IN,
+      amountCents,
+      currency: resource.amount.currency_code,
+      paypalRef: resource.id,
+      feeCents: fee ? payPalValueToCents(fee) : null,
+      netCents: net ? payPalValueToCents(net) : null,
+      source: TransactionSource.SUBSCRIPTION,
+      description: 'Monthly gift charged via PayPal Subscriptions',
+      occurredAt,
+    },
+  });
+
+  // The first charge is also what proves the subscription is really running.
+  if (gift.status !== GiftStatus.ACTIVE) {
+    await prisma.gift.update({
+      where: { id: gift.id },
+      data: { status: GiftStatus.ACTIVE, completedAt: gift.completedAt ?? occurredAt },
+    });
+  }
+
+  return `recorded ${amountCents} cents for gift ${gift.id} (sale ${resource.id})`;
+}
+
 webhooksRouter.post(
   '/webhooks/paypal',
   // Raw body: signature verification needs PayPal's exact bytes.
@@ -140,8 +260,25 @@ webhooksRouter.post(
     let note = `no handler for ${event.event_type}`;
     let failure: string | null = null;
     try {
-      if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
-        note = await handleCaptureCompleted(event);
+      switch (event.event_type) {
+        case 'PAYMENT.CAPTURE.COMPLETED':
+          note = await handleCaptureCompleted(event);
+          break;
+        case 'BILLING.SUBSCRIPTION.ACTIVATED':
+          note = await handleSubscriptionActivated(event);
+          break;
+        case 'BILLING.SUBSCRIPTION.CANCELLED':
+          note = await handleSubscriptionEnded(event, GiftStatus.CANCELLED);
+          break;
+        case 'BILLING.SUBSCRIPTION.EXPIRED':
+        case 'BILLING.SUBSCRIPTION.SUSPENDED':
+          note = await handleSubscriptionEnded(event, GiftStatus.FAILED);
+          break;
+        case 'PAYMENT.SALE.COMPLETED':
+          note = await handleRecurringPayment(event);
+          break;
+        default:
+          break;
       }
     } catch (error) {
       failure = error instanceof Error ? error.message : String(error);

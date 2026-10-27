@@ -11,6 +11,8 @@ import { useTranslation } from 'react-i18next';
 import { api, formatCents, type ChurchResponse, type SessionUser } from './api';
 import type { PayPalSdkInstance } from './types/paypal';
 
+type Frequency = 'ONE_TIME' | 'MONTHLY';
+
 const PRESET_AMOUNTS = [25, 50, 100, 250];
 
 type Status =
@@ -90,7 +92,9 @@ function bootstrapPayPal(currencyCode: string): Promise<Bootstrap> {
       mark('token:received');
       const sdk = await window.paypal.createInstance({
         clientToken,
-        components: ['paypal-payments'],
+        // `paypal-subscriptions` es obligatorio para el cobro mensual: sin él
+        // el método de suscripción no existe en la instancia.
+        components: ['paypal-payments', 'paypal-subscriptions'],
         pageType: 'checkout',
       });
       mark('instance:created');
@@ -123,6 +127,7 @@ export function GiveCard({
   const { t } = useTranslation();
   const [fundId, setFundId] = useState(church.funds[0]?.id ?? '');
   const [amount, setAmount] = useState(50);
+  const [frequency, setFrequency] = useState<Frequency>('ONE_TIME');
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
   const [result, setResult] = useState<string | null>(null);
   // The capture is a round trip to PayPal and takes a second or two. Without
@@ -133,8 +138,8 @@ export function GiveCard({
   const sdkRef = useRef<PayPalSdkInstance | null>(null);
   // The click handler must read the latest selections, but the PayPal session is
   // created once — a ref keeps the handler from going stale.
-  const selection = useRef({ fundId, amount });
-  selection.current = { fundId, amount };
+  const selection = useRef({ fundId, amount, frequency });
+  selection.current = { fundId, amount, frequency };
 
   useEffect(() => {
     let cancelled = false;
@@ -162,7 +167,7 @@ export function GiveCard({
     const button = buttonRef.current;
     if (status.kind !== 'ready' || !sdk || !button) return;
 
-    const session = sdk.createPayPalOneTimePaymentSession({
+    const unaVez = sdk.createPayPalOneTimePaymentSession({
       async onApprove(data) {
         setCapturing(true);
         setResult(null);
@@ -185,15 +190,50 @@ export function GiveCard({
       },
     });
 
+    const mensual = sdk.createPayPalSubscriptionPaymentSession({
+      async onApprove(data) {
+        setCapturing(true);
+        setResult(null);
+        try {
+          const confirmed = await api.confirmSubscription(data.subscriptionId);
+          onGiftCaptured(confirmed.giftId);
+        } catch (error) {
+          setResult(t('give.failed', { message: (error as Error).message }));
+        } finally {
+          setCapturing(false);
+        }
+      },
+      onCancel() {
+        setCapturing(false);
+        setResult(t('give.cancelled'));
+      },
+      onError(error) {
+        setCapturing(false);
+        setResult(t('give.failed', { message: String(error) }));
+      },
+    });
+
     const handleClick = () => {
       setResult(null);
-      const { fundId: f, amount: a } = selection.current;
+      const { fundId: f, amount: a, frequency: freq } = selection.current;
+
+      if (freq === 'MONTHLY') {
+        // El plan cobra $1.00 por unidad, así que el monto va en `quantity`
+        // y sólo admite dólares enteros.
+        const subscription = api
+          .createSubscription({ fundId: f, amountDollars: Math.round(a) })
+          .then(({ subscriptionId }) => ({ subscriptionId }));
+        void mensual.start({ presentationMode: 'auto' }, subscription);
+        return;
+      }
+
       const order = api
         .createGift({ fundId: f, amountCents: Math.round(a * 100) })
         .then(({ orderId }) => ({ orderId }));
 
-      // v6 wants the promise itself, so the checkout opens inside the click gesture.
-      void session.start({ presentationMode: 'auto' }, order);
+      // v6 quiere la promesa en sí, para que el checkout abra dentro del gesto
+      // del clic.
+      void unaVez.start({ presentationMode: 'auto' }, order);
     };
 
     button.addEventListener('click', handleClick);
@@ -236,6 +276,31 @@ export function GiveCard({
       )}
 
       <div className="mt-5">
+        <span className="text-sm font-medium">{t('give.frequency')}</span>
+        <div className="mt-2 flex gap-2" role="group" aria-label={t('give.frequency')}>
+          {(['ONE_TIME', 'MONTHLY'] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => {
+                setFrequency(f);
+                // Los planes cobran por unidad de $1, así que mensual sólo
+                // admite dólares enteros.
+                if (f === 'MONTHLY') setAmount((a) => Math.max(1, Math.round(a)));
+              }}
+              className={`rounded-full border px-4 py-1.5 text-sm ${
+                frequency === f
+                  ? 'border-blue-600 bg-blue-50 font-semibold text-blue-700'
+                  : 'border-neutral-300'
+              }`}
+            >
+              {t(`give.${f === 'ONE_TIME' ? 'oneTime' : 'monthly'}`)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-5">
         <span className="text-sm font-medium">{t('give.amount')}</span>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {PRESET_AMOUNTS.map((preset) => (
@@ -261,6 +326,9 @@ export function GiveCard({
             className="w-28 rounded border border-neutral-300 px-3 py-1.5 text-sm"
             aria-label={t('give.amount')}
           />
+          {frequency === 'MONTHLY' && (
+            <span className="text-xs text-neutral-500">{t('give.monthlyNote')}</span>
+          )}
         </div>
       </div>
 

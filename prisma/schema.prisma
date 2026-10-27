@@ -40,6 +40,9 @@ enum GiftFrequency {
 
 enum GiftStatus {
   PENDING
+  /// Subscription approved by the donor and active at PayPal. Each monthly
+  /// charge lands as its own Transaction against the same Gift.
+  ACTIVE
   COMPLETED
   FAILED
   CANCELLED
@@ -56,6 +59,8 @@ enum TransactionSource {
   CAPTURE
   WEBHOOK
   PAYOUT
+  /// A recurring charge reported by PAYMENT.SALE.COMPLETED.
+  SUBSCRIPTION
   SEED
 }
 
@@ -88,9 +93,13 @@ enum ImpactUpdateStatus {
 /// The demo runs a single church, but every row is scoped to one so the model is
 /// already multi-tenant shaped (spec §3, "out of scope").
 model Church {
-  id        String   @id @default(cuid())
-  name      String
-  currency  String   @default("USD")
+  id       String @id @default(cuid())
+  name     String
+  currency String @default("USD")
+
+  /// Catalog product the billing plans hang off. Created once, on demand.
+  paypalProductId String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -123,8 +132,14 @@ model Fund {
   slug        FundSlug
   name        String
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  /// Billing plan for monthly giving to this fund. Priced at $1.00 per unit
+  /// so the donor's amount rides in `quantity` — PayPal plans have a fixed
+  /// price, and this is the simplest shape that supports any amount
+  /// (docs/SPEC.md §4).
+  paypalPlanId String?  @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   church        Church         @relation(fields: [churchId], references: [id], onDelete: Cascade)
   gifts         Gift[]

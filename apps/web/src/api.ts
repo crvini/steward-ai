@@ -26,6 +26,19 @@ export type RolesResponse = {
   users: SessionUser[];
 };
 
+export type SubscriptionRow = {
+  id: string;
+  fund: string;
+  fundSlug: string;
+  amountCents: number;
+  currency: string;
+  status: string;
+  subscriptionId: string | null;
+  chargesSoFar: number;
+  givenSoFarCents: number;
+  createdAt: string;
+};
+
 export type Receipt = {
   id: string;
   donor: string;
@@ -86,6 +99,22 @@ export const api = {
       body: JSON.stringify(body),
     }),
   receipt: (giftId: string) => json<Receipt>(`/api/gifts/${encodeURIComponent(giftId)}`),
+  createSubscription: (body: { fundId: string; amountDollars: number }) =>
+    json<{ giftId: string; subscriptionId: string }>('/api/subscriptions', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  confirmSubscription: (subscriptionId: string) =>
+    json<{ giftId: string; status: string; nextBillingTime: string | null }>(
+      `/api/subscriptions/${encodeURIComponent(subscriptionId)}/confirm`,
+      { method: 'POST' },
+    ),
+  cancelSubscription: (subscriptionId: string) =>
+    json<{ giftId: string; status: string }>(
+      `/api/subscriptions/${encodeURIComponent(subscriptionId)}/cancel`,
+      { method: 'POST' },
+    ),
+  subscriptions: () => json<{ subscriptions: SubscriptionRow[] }>('/api/subscriptions'),
   roles: () => json<RolesResponse>('/api/session/roles'),
   session: () => json<{ user: SessionUser | null }>('/api/session'),
   signIn: (userId: string) =>

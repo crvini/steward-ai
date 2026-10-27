@@ -9,6 +9,13 @@ export type PayPalOneTimePaymentSession = {
   ): Promise<void>;
 };
 
+export type PayPalSubscriptionSession = {
+  start(
+    options: { presentationMode: 'auto' | 'modal' | 'popup' | 'payment-handler' },
+    subscription: Promise<{ subscriptionId: string }>,
+  ): Promise<void>;
+};
+
 export type PayPalSdkInstance = {
   findEligibleMethods(options: {
     currencyCode: string;
@@ -18,6 +25,17 @@ export type PayPalSdkInstance = {
     onCancel?(data: unknown): void;
     onError?(error: unknown): void;
   }): PayPalOneTimePaymentSession;
+  /**
+   * Nombre verificado contra el SDK en vivo: la documentación lo resume como
+   * `createPayPalSubscriptionSession`, pero el objeto expone
+   * `createPayPalSubscriptionPaymentSession`, y sólo cuando se pidió el
+   * componente `paypal-subscriptions`.
+   */
+  createPayPalSubscriptionPaymentSession(handlers: {
+    onApprove(data: { subscriptionId: string }): void | Promise<void>;
+    onCancel?(data: unknown): void;
+    onError?(error: unknown): void;
+  }): PayPalSubscriptionSession;
 };
 
 export type PayPalGlobal = {

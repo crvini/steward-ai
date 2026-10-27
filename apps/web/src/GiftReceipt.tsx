@@ -15,6 +15,7 @@ export function GiftReceipt({ receipt, onGiveAgain }: { receipt: Receipt; onGive
   const [copied, setCopied] = useState(false);
 
   const money = (cents: number) => formatCents(cents, receipt.currency, i18n.language);
+  const esMensual = receipt.frequency === 'MONTHLY';
 
   const copyReference = async () => {
     if (!receipt.captureId) return;
@@ -38,8 +39,12 @@ export function GiftReceipt({ receipt, onGiveAgain }: { receipt: Receipt; onGive
           ✓
         </span>
         <div>
-          <h2 className="text-xl font-semibold">{t('receipt.title', { name: receipt.donor })}</h2>
-          <p className="text-sm text-neutral-600">{t('receipt.subtitle')}</p>
+          <h2 className="text-xl font-semibold">
+            {esMensual ? t('receipt.monthlyTitle') : t('receipt.title', { name: receipt.donor })}
+          </h2>
+          <p className="text-sm text-neutral-600">
+            {esMensual ? t('receipt.monthlySubtitle') : t('receipt.subtitle')}
+          </p>
         </div>
       </div>
 
@@ -47,6 +52,7 @@ export function GiftReceipt({ receipt, onGiveAgain }: { receipt: Receipt; onGive
         <span className="text-4xl font-semibold tabular-nums">{money(receipt.amountCents)}</span>
         <span className="text-lg text-neutral-600">
           {t('receipt.toFund', { fund: receipt.fund })}
+          {esMensual ? ` · ${t('receipt.perMonth')}` : ''}
         </span>
       </div>
       <p className="mt-1 text-sm text-neutral-500">
