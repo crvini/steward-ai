@@ -5,6 +5,8 @@ export type Fund = {
   slug: string;
   name: string;
   description: string | null;
+  /** Null for a fund that runs continuously, like the general tithe. */
+  goalCents: number | null;
   balanceCents: number;
 };
 
@@ -125,6 +127,17 @@ export type ImpactUpdate = {
   sentAt?: string;
 };
 
+export type ActivityEntry = {
+  id: string;
+  at: string;
+  actor: string;
+  action: string;
+  byAi: boolean;
+  entity: string;
+  entityId: string;
+  payload: unknown;
+};
+
 export type Receipt = {
   id: string;
   donor: string;
@@ -201,6 +214,7 @@ export const api = {
       { method: 'POST' },
     ),
   subscriptions: () => json<{ subscriptions: SubscriptionRow[] }>('/api/subscriptions'),
+  activity: () => json<{ entries: ActivityEntry[] }>('/api/activity'),
   ledger: () => json<{ rows: LedgerRow[] }>('/api/ledger'),
   draftImpact: (distributionId: string) =>
     json<{ drafted: number }>(`/api/impact/${encodeURIComponent(distributionId)}/draft`, {

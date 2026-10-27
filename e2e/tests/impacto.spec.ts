@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { cerrarSesion, entrarComo, PERSONAS } from './ayudas';
+import { cerrarSesion, entrarComo, irAPestaña, PERSONAS } from './ayudas';
 
 test('un donante no puede redactar ni aprobar reportes', async ({ page }) => {
   await cerrarSesion(page);
@@ -44,5 +44,6 @@ test('no se redactan reportes de un reparto que no se ha pagado', async ({ page 
 test('el tesorero ve la cola de revisión', async ({ page }) => {
   await cerrarSesion(page);
   await entrarComo(page, PERSONAS.tesorero.nombre);
+  await irAPestaña(page, /^borradores$/i);
   await expect(page.getByRole('heading', { name: /reportes de impacto/i })).toBeVisible();
 });

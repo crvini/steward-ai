@@ -133,6 +133,10 @@ model Fund {
   name        String
   description String?
 
+  /// What the church hopes to raise for this fund. Null for a fund that runs
+  /// continuously (the general tithe has no finish line).
+  goalCents Int?
+
   /// Billing plan for monthly giving to this fund. Priced at $1.00 per unit
   /// so the donor's amount rides in `quantity` — PayPal plans have a fixed
   /// price, and this is the simplest shape that supports any amount

@@ -11,8 +11,18 @@ export const PERSONAS = {
 export async function entrarComo(page: Page, nombre: string) {
   await page.goto('/');
   await page.getByRole('button', { name: new RegExp(nombre) }).click();
-  // El encabezado solo existe una vez dentro.
+  // El selector de rol de la barra superior solo existe una vez dentro.
   await page.getByRole('combobox').first().waitFor();
+}
+
+/**
+ * Abre una pestaña de la barra superior.
+ *
+ * Desde el rediseño cada rol tiene sus pestañas y el contenido ya no está
+ * todo en una página larga, así que casi toda prueba de pantalla pasa por acá.
+ */
+export async function irAPestaña(page: Page, nombre: RegExp) {
+  await page.getByRole('button', { name: nombre }).first().click();
 }
 
 /** Deja la pestaña sin sesión y sin recibo guardado. */

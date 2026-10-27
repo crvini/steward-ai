@@ -1,1 +1,69 @@
 @import 'tailwindcss';
+
+/*
+ * Tokens de Steward AI.
+ *
+ * Tailwind 4 define el tema en CSS, no en un archivo de configuración: cada
+ * variable declarada acá genera sus utilidades (`bg-navy-900`, `text-ink-muted`,
+ * `font-display`…). Los valores vienen de las pantallas de referencia en
+ * docs/design/ y no deberían cambiarse sin actualizarlas.
+ */
+@theme {
+  --color-navy-900: #0b182a;
+  --color-navy-700: #1a2b44;
+  --color-gold-500: #f59e0b;
+
+  --color-surface: #ffffff;
+  --color-surface-alt: #f4f6f9;
+  --color-ink-muted: #55657a;
+  --color-line: #dde3ea;
+
+  /* Un color por fondo designado. Es identidad, no decoración: el mismo
+     color identifica al fondo en las barras, en la tabla y en las tarjetas. */
+  --color-fund-tithe: #0891b2;
+  --color-fund-missions: #c42a4a;
+  --color-fund-benevolence: #1e8a62;
+  --color-fund-building: #8a5cc9;
+
+  --font-sans:
+    'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Archivo', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    /* Cifras de ancho fijo en todas partes: una columna de montos que baila
+       al cambiar de dígito es ilegible para quien cuadra cuentas. */
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-color: var(--color-surface-alt);
+    color: var(--color-navy-900);
+  }
+
+  /* Archivo es variable en wdth; el diseño la pide ensanchada. */
+  .font-display {
+    font-family: var(--font-display);
+    font-stretch: 112%;
+    font-variation-settings: 'wdth' 112;
+    letter-spacing: -0.015em;
+  }
+
+  /* Los montos grandes van un poco más anchos, como en las pantallas. */
+  .amount {
+    font-family: var(--font-display);
+    font-stretch: 120%;
+    font-variation-settings: 'wdth' 120;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold-500);
+    outline-offset: 2px;
+  }
+}

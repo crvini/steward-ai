@@ -1,67 +1,136 @@
 /**
- * Entry screen. Judges review hundreds of projects — if signing in takes more
- * than a few seconds they move on. One click per role, no password, no sign-up.
+ * Entry screen. Two panels: the promise on navy at the left, the three roles
+ * at the right. No password and no sign-up — judges review hundreds of
+ * projects and anything that asks them to type loses them.
+ *
+ * The fund threads at the bottom-left are the product's thesis stated before
+ * anyone clicks: every fund has its own thread, and you will see it again on
+ * every screen.
  */
 import { useTranslation } from 'react-i18next';
 
-import type { RolesResponse, Role, SessionUser } from './api';
+import type { ChurchResponse, Role, RolesResponse, SessionUser } from './api';
+import { formatCents } from './api';
+import { FundThread } from './FundThread';
+import { Logo } from './ui';
 
-const ROLE_ART: Record<Role, { emoji: string; ring: string }> = {
-  DONOR: { emoji: '🙌', ring: 'hover:border-emerald-400 focus-visible:border-emerald-400' },
-  TREASURER: { emoji: '📊', ring: 'hover:border-sky-400 focus-visible:border-sky-400' },
-  PASTOR: { emoji: '🕊️', ring: 'hover:border-violet-400 focus-visible:border-violet-400' },
+const INITIALS_TONE: Record<Role, string> = {
+  DONOR: 'bg-fund-missions/10 text-fund-missions',
+  TREASURER: 'bg-fund-tithe/10 text-fund-tithe',
+  PASTOR: 'bg-fund-benevolence/10 text-fund-benevolence',
 };
+
+const initials = (name: string) =>
+  name
+    .replace(/^Pastor\s+/i, '')
+    .split(' ')
+    .slice(0, 2)
+    .map((w) => w[0] ?? '')
+    .join('')
+    .toUpperCase();
 
 export function RoleChooser({
   roles,
+  church,
   onPick,
   busyId,
 }: {
   roles: RolesResponse;
+  church: ChurchResponse | null;
   onPick: (user: SessionUser) => void;
   busyId: string | null;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-4xl flex-col justify-center gap-10 px-6 py-16">
-      <header className="text-center">
-        <h1 className="text-4xl font-semibold tracking-tight">{t('app.name')}</h1>
-        <p className="mx-auto mt-3 max-w-2xl text-lg text-neutral-600">{t('app.tagline')}</p>
-        <p className="mt-4 text-sm text-neutral-500">
-          {t('entry.subtitle', { church: roles.church.name })}
-        </p>
-      </header>
+    <div className="grid min-h-screen lg:grid-cols-2">
+      {/* Izquierda: la promesa */}
+      <div className="flex flex-col justify-between bg-navy-900 px-8 py-10 text-white lg:px-14 lg:py-14">
+        <span className="flex items-center gap-2.5">
+          <Logo />
+          <span className="font-display text-xl font-bold">Steward AI</span>
+        </span>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        {roles.featured.map((user) => {
-          const art = ROLE_ART[user.role];
-          const busy = busyId === user.id;
-          return (
-            <button
-              key={user.id}
-              type="button"
-              disabled={Boolean(busyId)}
-              onClick={() => onPick(user)}
-              className={`flex flex-col items-start gap-2 rounded-xl border-2 border-neutral-200 bg-white p-6 text-left shadow-sm transition disabled:opacity-60 ${art.ring}`}
-            >
-              <span aria-hidden="true" className="text-3xl">
-                {art.emoji}
-              </span>
-              <span className="text-base font-semibold">{t(`entry.role.${user.role}.title`)}</span>
-              <span className="text-sm text-neutral-600">
-                {t(`entry.role.${user.role}.blurb`)}
-              </span>
-              <span className="mt-2 text-sm font-medium text-neutral-900">{user.name}</span>
-              <span className="text-xs text-neutral-500">
-                {busy ? t('entry.entering') : t('entry.cta')}
-              </span>
-            </button>
-          );
-        })}
+        <div className="my-12 max-w-xl">
+          <h1 className="font-display text-4xl leading-[1.08] font-extrabold lg:text-5xl">
+            {t('entry.headline')}
+          </h1>
+          <p className="mt-6 text-base leading-relaxed text-white/70">{t('entry.lede')}</p>
+        </div>
+
+        {church && (
+          <div>
+            <ul className="flex flex-col gap-3">
+              {church.funds.map((fund) => (
+                <li key={fund.id} className="grid grid-cols-[8rem_1fr_auto] items-center gap-4">
+                  <span className="text-sm text-white/70">{fund.name}</span>
+                  <FundThread
+                    slug={fund.slug}
+                    progress={
+                      fund.goalCents ? fund.balanceCents / fund.goalCents : undefined
+                    }
+                    height={12}
+                    rounded={false}
+                  />
+                  <span className="amount text-sm">
+                    {formatCents(fund.balanceCents, church.church.currency, i18n.language)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 text-xs text-white/45">
+              {t('entry.footnote', { church: church.church.name })}
+            </p>
+          </div>
+        )}
       </div>
 
-      <p className="text-center text-xs text-neutral-500">{t('entry.noPassword')}</p>
-    </main>
+      {/* Derecha: los tres roles */}
+      <div className="flex flex-col justify-center bg-surface px-8 py-12 lg:px-14">
+        <div className="mx-auto w-full max-w-xl">
+          <h2 className="font-display text-3xl font-extrabold">
+            {t('entry.title', { church: roles.church.name })}
+          </h2>
+          <p className="mt-2 text-sm text-ink-muted">{t('entry.subtitle')}</p>
+
+          <div className="mt-7 flex flex-col gap-3">
+            {roles.featured.map((user) => (
+              <button
+                key={user.id}
+                type="button"
+                disabled={Boolean(busyId)}
+                onClick={() => onPick(user)}
+                className="group flex items-center gap-4 rounded-2xl border border-line bg-surface p-5 text-left transition hover:border-navy-900 disabled:opacity-60"
+              >
+                <span
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold ${INITIALS_TONE[user.role]}`}
+                >
+                  {initials(user.name)}
+                </span>
+                <span className="flex-1">
+                  <span className="block font-semibold">
+                    {user.name}, {t(`role.${user.role}`).toLowerCase()}
+                  </span>
+                  <span className="mt-0.5 block text-sm text-ink-muted">
+                    {t(`entry.role.${user.role}.blurb`)}
+                  </span>
+                </span>
+                <span className="text-ink-muted transition group-hover:translate-x-0.5" aria-hidden>
+                  {busyId === user.id ? '…' : '›'}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-7 rounded-2xl bg-gold-500/10 p-5">
+            <p className="flex items-center gap-2 text-sm font-semibold text-navy-900">
+              <span aria-hidden>!</span>
+              {t('entry.sandboxTitle')}
+            </p>
+            <p className="mt-1.5 text-sm text-navy-900/80">{t('entry.sandboxBody')}</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

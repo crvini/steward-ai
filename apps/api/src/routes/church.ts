@@ -42,6 +42,7 @@ churchRouter.get('/church', async (_req, res, next) => {
         slug: f.slug,
         name: f.name,
         description: f.description,
+        goalCents: f.goalCents,
         balanceCents: balanceOf(f.id),
       })),
       donors,

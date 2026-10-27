@@ -44,7 +44,8 @@
     "CANCELLED": "Cancelled"
   },
   "demo": {
-    "banner": "Demo environment · PayPal sandbox · No real money moves"
+    "banner": "Demo environment · PayPal sandbox · No real money moves",
+    "badge": "Sandbox demo"
   },
   "role": {
     "DONOR": "Member",
@@ -56,24 +57,30 @@
     "exit": "Exit"
   },
   "entry": {
-    "subtitle": "Pick a role to explore {{church}}. No password, no sign-up.",
+    "subtitle": "No sign-up. You can switch roles at any time from the top bar.",
     "cta": "Click to enter →",
     "entering": "Entering…",
     "noPassword": "This is a demo. Every role shares the same seeded church data, and you can switch at any time.",
     "role": {
       "DONOR": {
         "title": "Give as a member",
-        "blurb": "Give to a fund and see exactly what your gift accomplished."
+        "blurb": "Give by chatting with the assistant and see what your gift made possible."
       },
       "TREASURER": {
         "title": "Manage as treasurer",
-        "blurb": "Review every gift, propose distributions, ask questions of the ledger."
+        "blurb": "Ask about the books, review the AI's distribution plan and give the first approval."
       },
       "PASTOR": {
         "title": "Approve as pastor",
-        "blurb": "The second key: nothing is paid out without your signature."
+        "blurb": "Read the weekly brief and give the second approval that sends money through PayPal."
       }
-    }
+    },
+    "headline": "Every gift keeps its thread, from the offering to the people it helps.",
+    "lede": "Steward AI helps a church receive, distribute and report giving with PayPal. The AI proposes, the rules check, and two people approve before money moves.",
+    "footnote": "{{church}}, this month. A product of e-Ministry.",
+    "title": "Explore {{church}} as",
+    "sandboxTitle": "Demo with PayPal sandbox. No real money moves.",
+    "sandboxBody": "To pay at checkout, sign in with a PayPal sandbox buyer account from your developer dashboard."
   },
   "receipt": {
     "title": "Thank you, {{name}}",
@@ -167,5 +174,43 @@
     "noDrafts": "No drafts waiting.",
     "approve": "Approve and send",
     "approveEdited": "Approve my version"
+  },
+  "tab": {
+    "give": "Give",
+    "impact": "My impact",
+    "gifts": "My gifts",
+    "books": "Books",
+    "distributions": "Distributions",
+    "impactDrafts": "Impact drafts",
+    "aiActivity": "AI activity",
+    "week": "This week",
+    "approvals": "Approvals"
+  },
+  "activity": {
+    "title": "AI activity",
+    "byAi": "By the AI",
+    "byPerson": "By a person",
+    "subtitle": "Every proposal the assistant made and every signature that followed it.",
+    "empty": "Nothing yet.",
+    "action": {
+      "ai.gift_proposed": "The assistant proposed a gift",
+      "ai.ledger_question": "A question was asked of the books",
+      "ai.impact_drafted": "Impact notes drafted",
+      "distribution.proposed_by_ai": "The assistant proposed a distribution",
+      "distribution.adjusted": "The treasurer adjusted the lines",
+      "distribution.treasurer_approved": "First key: treasurer approved",
+      "distribution.pastor_approved": "Second key: pastor approved",
+      "distribution.rejected": "Distribution rejected",
+      "distribution.executed": "Sent with PayPal Payouts",
+      "impact.approved": "An impact note was approved",
+      "payout.item_succeeded": "A payout reached its recipient",
+      "payout.item_failed": "A payout failed and was reversed",
+      "gift.captured": "A gift was captured",
+      "gift.subscription_activated": "A monthly gift became active"
+    }
+  },
+  "fund": {
+    "ofGoal": "{{percent}}% of the {{goal}} goal",
+    "readyToDistribute": "Ready to distribute"
   }
 }

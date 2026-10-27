@@ -47,24 +47,35 @@ const FUNDS = [
     slug: FundSlug.GENERAL,
     name: 'General Tithe',
     description: 'Day-to-day ministry: staff, utilities, Sunday services.',
+    // Sin meta a propósito: el diezmo general no tiene línea de llegada, y
+    // las pantallas lo muestran como "entró / salió" en vez de un porcentaje.
+    //
+    // Las metas de los otros tres NO son las del diseño: ahí son inventadas
+    // ($4,000 para Misiones) y no cuadran con lo que esta iglesia recibe de
+    // verdad, así que la barra saldría al 5% y no diría nada. Se eligieron
+    // proporcionales a la entrada real del seed.
+    goalCents: null,
     weight: 0.5,
   },
   {
     slug: FundSlug.MISSIONS,
     name: 'Missions',
     description: 'Support for missionaries the church has sent out.',
+    goalCents: 100_000,
     weight: 0.25,
   },
   {
     slug: FundSlug.BENEVOLENCE,
     name: 'Benevolence',
     description: 'Emergency help for families in the congregation and neighborhood.',
+    goalCents: 200_000,
     weight: 0.15,
   },
   {
     slug: FundSlug.BUILDING,
     name: 'Building',
     description: 'Repairs and the new childrens wing.',
+    goalCents: 500_000,
     weight: 0.1,
   },
 ] as const;
@@ -166,6 +177,7 @@ async function main() {
             slug: f.slug,
             name: f.name,
             description: f.description,
+            goalCents: f.goalCents,
           },
         });
         return [f.slug, fund] as const;

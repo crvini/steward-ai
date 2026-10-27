@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { cerrarSesion, entrarComo, PERSONAS } from './ayudas';
+import { cerrarSesion, entrarComo, irAPestaña, PERSONAS } from './ayudas';
 
 test('el donante no puede leer el libro mayor', async ({ page }) => {
   await cerrarSesion(page);
@@ -15,6 +15,7 @@ test('el donante no puede leer el libro mayor', async ({ page }) => {
 test('el tesorero ve la tabla con comisión y neto', async ({ page }) => {
   await cerrarSesion(page);
   await entrarComo(page, PERSONAS.tesorero.nombre);
+  await irAPestaña(page, /^libros$/i);
 
   await expect(page.getByRole('heading', { name: /libro mayor/i })).toBeVisible();
   // AG Grid pinta sus cabeceras; que existan prueba que el grid montó.

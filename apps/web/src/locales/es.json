@@ -44,7 +44,8 @@
     "CANCELLED": "Cancelada"
   },
   "demo": {
-    "banner": "Entorno de demostración · Sandbox de PayPal · No se mueve dinero real"
+    "banner": "Entorno de demostración · Sandbox de PayPal · No se mueve dinero real",
+    "badge": "Demo sandbox"
   },
   "role": {
     "DONOR": "Miembro",
@@ -56,24 +57,30 @@
     "exit": "Salir"
   },
   "entry": {
-    "subtitle": "Elige un rol para explorar {{church}}. Sin contraseña, sin registro.",
+    "subtitle": "Sin registro. Podés cambiar de rol cuando quieras desde la barra de arriba.",
     "cta": "Haz clic para entrar →",
     "entering": "Entrando…",
     "noPassword": "Esto es una demostración. Todos los roles comparten los mismos datos de prueba y puedes cambiar cuando quieras.",
     "role": {
       "DONOR": {
         "title": "Dar como miembro",
-        "blurb": "Da a un fondo y mira exactamente qué logró tu ofrenda."
+        "blurb": "Dá conversando con el asistente y mirá qué hizo posible tu ofrenda."
       },
       "TREASURER": {
         "title": "Administrar como tesorero",
-        "blurb": "Revisa cada ofrenda, propón repartos y pregúntale al libro."
+        "blurb": "Preguntá sobre los libros, revisá el plan de reparto de la IA y dá la primera aprobación."
       },
       "PASTOR": {
         "title": "Aprobar como pastor",
-        "blurb": "La segunda llave: nada se reparte sin tu firma."
+        "blurb": "Leé el resumen semanal y dá la segunda aprobación, la que envía el dinero por PayPal."
       }
-    }
+    },
+    "headline": "Cada ofrenda conserva su hilo, desde que se da hasta la gente a la que ayuda.",
+    "lede": "Steward AI ayuda a una iglesia a recibir, repartir y rendir cuentas de sus ofrendas con PayPal. La IA propone, las reglas revisan, y dos personas aprueban antes de que el dinero se mueva.",
+    "footnote": "{{church}}, este mes. Un producto de e-Ministry.",
+    "title": "Explorá {{church}} como",
+    "sandboxTitle": "Demo con el sandbox de PayPal. No se mueve dinero real.",
+    "sandboxBody": "Para pagar en el checkout, iniciá sesión con una cuenta de comprador del sandbox de tu panel de desarrollador."
   },
   "receipt": {
     "title": "Gracias, {{name}}",
@@ -167,5 +174,43 @@
     "noDrafts": "No hay borradores pendientes.",
     "approve": "Aprobar y enviar",
     "approveEdited": "Aprobar mi versión"
+  },
+  "tab": {
+    "give": "Dar",
+    "impact": "Mi impacto",
+    "gifts": "Mis ofrendas",
+    "books": "Libros",
+    "distributions": "Repartos",
+    "impactDrafts": "Borradores",
+    "aiActivity": "Actividad de la IA",
+    "week": "Esta semana",
+    "approvals": "Aprobaciones"
+  },
+  "activity": {
+    "title": "Actividad de la IA",
+    "byAi": "Por la IA",
+    "byPerson": "Por una persona",
+    "subtitle": "Cada propuesta del asistente y cada firma que vino después.",
+    "empty": "Todavía no hay nada.",
+    "action": {
+      "ai.gift_proposed": "El asistente propuso una ofrenda",
+      "ai.ledger_question": "Se preguntó al libro mayor",
+      "ai.impact_drafted": "Se redactaron notas de impacto",
+      "distribution.proposed_by_ai": "El asistente propuso un reparto",
+      "distribution.adjusted": "El tesorero ajustó las líneas",
+      "distribution.treasurer_approved": "Primera llave: aprobó el tesorero",
+      "distribution.pastor_approved": "Segunda llave: aprobó el pastor",
+      "distribution.rejected": "Reparto rechazado",
+      "distribution.executed": "Enviado con PayPal Payouts",
+      "impact.approved": "Se aprobó una nota de impacto",
+      "payout.item_succeeded": "Un pago llegó a su destinatario",
+      "payout.item_failed": "Un pago falló y se revirtió",
+      "gift.captured": "Se capturó una ofrenda",
+      "gift.subscription_activated": "Una ofrenda mensual quedó activa"
+    }
+  },
+  "fund": {
+    "ofGoal": "{{percent}}% de la meta de {{goal}}",
+    "readyToDistribute": "Listo para repartir"
   }
 }

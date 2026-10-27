@@ -15,14 +15,48 @@ import { GiveCard } from './GiveCard';
 import { GiftsTable } from './GiftsTable';
 import { GiftReceipt } from './GiftReceipt';
 import { RoleChooser } from './RoleChooser';
-import { DemoBanner } from './DemoBanner';
 import { Distributions } from './Distributions';
 import { LedgerGrid } from './LedgerGrid';
 import { MyImpact } from './MyImpact';
 import { ImpactReview } from './ImpactReview';
+import { AiActivity } from './AiActivity';
+import { TopBar, TABS_BY_ROLE } from './TopBar';
+import { FundThread } from './FundThread';
+import { Card } from './ui';
 
 /** Survives a reload so a refreshed receipt is not lost. */
 const LAST_GIFT_KEY = 'steward:lastGiftId';
+
+/** The fund cards that sit above every signed-in screen. */
+function FundStrip({ church }: { church: ChurchResponse }) {
+  const { t, i18n } = useTranslation();
+  const money = (c: number) => formatCents(c, church.church.currency, i18n.language);
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {church.funds.map((fund) => (
+        <Card key={fund.id} className="p-4">
+          <p className="text-sm font-semibold">{fund.name}</p>
+          <p className="amount mt-1 text-2xl">{money(fund.balanceCents)}</p>
+          <FundThread
+            slug={fund.slug}
+            progress={fund.goalCents ? fund.balanceCents / fund.goalCents : undefined}
+            className="mt-2.5"
+            label={fund.name}
+          />
+          <p className="mt-2 text-xs text-ink-muted">
+            {fund.goalCents
+              ? t('fund.ofGoal', {
+                  percent: Math.round((fund.balanceCents / fund.goalCents) * 100),
+                  goal: money(fund.goalCents),
+                })
+              : t('fund.readyToDistribute')}
+          </p>
+        </Card>
+      ))}
+    </div>
+  );
+}
 
 export default function App() {
   const { t, i18n } = useTranslation();
@@ -33,6 +67,7 @@ export default function App() {
   const [gifts, setGifts] = useState<GiftRow[]>([]);
   const [distributions, setDistributions] = useState<DistributionRow[]>([]);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [tab, setTab] = useState<string>('give');
   const [signingIn, setSigningIn] = useState<string | null>(null);
   const [booted, setBooted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,8 +76,8 @@ export default function App() {
     const [churchData, giftData] = await Promise.all([api.church(), api.gifts()]);
     setChurch(churchData);
     setGifts(giftData.gifts);
-    // Solo el tesorero y el pastor pueden leerlos; para el donante da 403 y
-    // eso no es un error que valga la pena mostrar.
+    // Only the treasurer and pastor may read these; for a donor it is a 403
+    // and that is not an error worth showing.
     setDistributions(await api.distributions().then((d) => d.distributions).catch(() => []));
   }, []);
 
@@ -51,18 +86,23 @@ export default function App() {
       setReceipt(await api.receipt(giftId));
       sessionStorage.setItem(LAST_GIFT_KEY, giftId);
     } catch {
-      // A receipt we cannot load is not worth blocking the page over.
       sessionStorage.removeItem(LAST_GIFT_KEY);
     }
   }, []);
 
   useEffect(() => {
-    (async () => {
+    void (async () => {
       try {
-        const [{ user: current }, roleData] = await Promise.all([api.session(), api.roles()]);
+        const [{ user: current }, roleData, churchData] = await Promise.all([
+          api.session(),
+          api.roles(),
+          api.church(),
+        ]);
         setRoles(roleData);
+        setChurch(churchData);
         setUser(current);
         if (current) {
+          setTab(TABS_BY_ROLE[current.role][0]!);
           await loadChurch();
           const last = sessionStorage.getItem(LAST_GIFT_KEY);
           if (last) await showReceipt(last);
@@ -81,6 +121,7 @@ export default function App() {
     try {
       const { user: signed } = await api.signIn(picked.id);
       setUser(signed);
+      setTab(TABS_BY_ROLE[signed.role][0]!);
       await i18n.changeLanguage(signed.locale);
       await loadChurch();
     } catch (e) {
@@ -90,23 +131,9 @@ export default function App() {
     }
   };
 
-  const switchTo = async (userId: string) => {
-    sessionStorage.removeItem(LAST_GIFT_KEY);
-    setReceipt(null);
-    const target = roles?.users.find((u) => u.id === userId);
-    if (target) await signIn(target);
-  };
-
-  const signOut = async () => {
-    await api.signOut();
-    sessionStorage.removeItem(LAST_GIFT_KEY);
-    setUser(null);
-    setReceipt(null);
-  };
-
   if (!booted) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-neutral-500">
+      <div className="flex min-h-screen items-center justify-center text-sm text-ink-muted">
         {t('app.loading')}
       </div>
     );
@@ -114,140 +141,89 @@ export default function App() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-neutral-50 text-neutral-900">
-        <DemoBanner />
+      <>
         {error && (
-          <p className="mx-auto mt-4 max-w-2xl rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <p className="bg-fund-missions/10 px-6 py-3 text-center text-sm text-fund-missions">
             {error}
           </p>
         )}
-        {roles && <RoleChooser roles={roles} onPick={signIn} busyId={signingIn} />}
-      </div>
+        {roles && (
+          <RoleChooser roles={roles} church={church} onPick={signIn} busyId={signingIn} />
+        )}
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900">
-      <DemoBanner />
+    <div className="min-h-screen bg-surface-alt text-navy-900">
+      <TopBar
+        churchName={church?.church.name ?? ''}
+        user={user}
+        users={roles?.users ?? []}
+        tab={tab}
+        onTab={setTab}
+        onSwitchUser={(id) => {
+          sessionStorage.removeItem(LAST_GIFT_KEY);
+          setReceipt(null);
+          const target = roles?.users.find((u) => u.id === id);
+          if (target) void signIn(target);
+        }}
+        onSignOut={() => {
+          void api.signOut();
+          sessionStorage.removeItem(LAST_GIFT_KEY);
+          setUser(null);
+          setReceipt(null);
+        }}
+      />
 
-      <header className="border-b border-neutral-200 bg-white">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-4">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight">{t('app.name')}</h1>
-            <p className="text-xs text-neutral-500">{church?.church.name ?? '…'}</p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Switching role is the fastest way to show two-key approval. */}
-            <label className="flex items-center gap-2 text-xs text-neutral-600">
-              <span>{t('header.viewingAs')}</span>
-              <select
-                value={user.id}
-                onChange={(e) => void switchTo(e.target.value)}
-                className="rounded border border-neutral-300 px-2 py-1 text-xs"
-              >
-                {roles?.users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} · {t(`role.${u.role}`)}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="flex gap-1">
-              {(['en', 'es'] as const).map((lng) => (
-                <button
-                  key={lng}
-                  type="button"
-                  onClick={() => void i18n.changeLanguage(lng)}
-                  className={`rounded px-2.5 py-1 text-xs font-medium uppercase ${
-                    i18n.resolvedLanguage === lng
-                      ? 'bg-neutral-900 text-white'
-                      : 'text-neutral-600 hover:bg-neutral-100'
-                  }`}
-                >
-                  {lng}
-                </button>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => void signOut()}
-              className="rounded border border-neutral-300 px-2.5 py-1 text-xs font-medium"
-            >
-              {t('header.exit')}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-8">
-        <p className="text-neutral-600">{t('app.tagline')}</p>
-
+      <main className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-7">
         {error && (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <p className="rounded-xl border border-fund-missions/30 bg-fund-missions/5 px-4 py-3 text-sm text-fund-missions">
             {error}
           </p>
         )}
 
-        {church && (
-          <>
-            <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {church.funds.map((fund) => (
-                <div
-                  key={fund.id}
-                  className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm"
-                >
-                  <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-                    {fund.name}
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tabular-nums">
-                    {formatCents(fund.balanceCents, church.church.currency, i18n.language)}
-                  </p>
-                </div>
-              ))}
-            </section>
+        {church && <FundStrip church={church} />}
 
-            {/* El tesorero y el pastor trabajan sobre repartos; el miembro da. */}
-            {user.role === 'DONOR' ? (
-              receipt ? (
-                <GiftReceipt
-                  receipt={receipt}
-                  onGiveAgain={() => {
-                    sessionStorage.removeItem(LAST_GIFT_KEY);
-                    setReceipt(null);
-                  }}
-                />
-              ) : (
-                <GiveCard
-                  church={church}
-                  user={user}
-                  onGiftCaptured={(giftId) => {
-                    void showReceipt(giftId);
-                    void loadChurch();
-                  }}
-                />
-              )
-            ) : (
-              <>
-                <Distributions church={church} user={user} onChanged={() => void loadChurch()} />
-                {user.role === 'TREASURER' && <ImpactReview distributions={distributions} />}
-                <LedgerGrid locale={i18n.language} />
-              </>
-            )}
-
-            {user.role === 'DONOR' && (
-              <>
-                <MyImpact />
-                <section>
-                  <h2 className="mb-3 text-xl font-semibold">{t('table.title')}</h2>
-                  <GiftsTable gifts={gifts} />
-                </section>
-              </>
-            )}
-          </>
+        {church && tab === 'give' && (
+          receipt ? (
+            <GiftReceipt
+              receipt={receipt}
+              onGiveAgain={() => {
+                sessionStorage.removeItem(LAST_GIFT_KEY);
+                setReceipt(null);
+              }}
+            />
+          ) : (
+            <GiveCard
+              church={church}
+              user={user}
+              onGiftCaptured={(giftId) => {
+                void showReceipt(giftId);
+                void loadChurch();
+              }}
+            />
+          )
         )}
+
+        {tab === 'impact' && <MyImpact />}
+
+        {tab === 'gifts' && (
+          <section>
+            <h2 className="mb-3 font-display text-xl font-bold">{t('table.title')}</h2>
+            <GiftsTable gifts={gifts} />
+          </section>
+        )}
+
+        {church && (tab === 'distributions' || tab === 'approvals' || tab === 'week') && (
+          <Distributions church={church} user={user} onChanged={() => void loadChurch()} />
+        )}
+
+        {tab === 'impactDrafts' && <ImpactReview distributions={distributions} />}
+
+        {tab === 'books' && <LedgerGrid locale={i18n.language} />}
+
+        {tab === 'aiActivity' && <AiActivity />}
       </main>
     </div>
   );

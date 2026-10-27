@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { cerrarSesion, entrarComo, PERSONAS } from './ayudas';
+import { cerrarSesion, entrarComo, irAPestaña, PERSONAS } from './ayudas';
 
 /**
  * Los guardarraíles del reparto. No llaman a la IA a propósito: son baratas,
@@ -36,11 +36,13 @@ test('el pastor ve los repartos pero no puede proponer', async ({ page }) => {
 test('el tesorero ve la pantalla de repartos, el donante no', async ({ page }) => {
   await cerrarSesion(page);
   await entrarComo(page, PERSONAS.tesorero.nombre);
+  await irAPestaña(page, /^repartos$/i);
   await expect(page.getByRole('heading', { name: /^repartos$/i })).toBeVisible();
 
   await cerrarSesion(page);
   await entrarComo(page, PERSONAS.miembro.nombre);
-  await expect(page.getByRole('heading', { name: /^repartos$/i })).toHaveCount(0);
+  // El donante no tiene siquiera la pestaña.
+  await expect(page.getByRole('button', { name: /^repartos$/i })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: /dar a un fondo/i })).toBeVisible();
 });
 

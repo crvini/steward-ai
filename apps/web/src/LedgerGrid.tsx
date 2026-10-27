@@ -37,11 +37,28 @@ const MODULES = [
   ...(import.meta.env.DEV ? [ValidationModule] : []),
 ];
 
+/**
+ * El tema usa los mismos tokens que el resto de la interfaz. AG Grid no lee
+ * variables CSS en todos sus parámetros, así que los valores van literales —
+ * si cambian en index.css hay que cambiarlos acá también.
+ */
 const theme = themeQuartz.withParams({
-  accentColor: '#171717',
+  accentColor: '#f59e0b',
+  backgroundColor: '#ffffff',
+  foregroundColor: '#0b182a',
+  borderColor: '#dde3ea',
+  headerBackgroundColor: '#ffffff',
+  headerTextColor: '#55657a',
   headerFontWeight: 600,
-  borderColor: '#e5e5e5',
-  rowHoverColor: '#fafafa',
+  rowHoverColor: '#f4f6f9',
+  oddRowBackgroundColor: '#ffffff',
+  fontFamily: "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif",
+  cellFontFamily: "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif",
+  fontSize: 14,
+  headerHeight: 44,
+  rowHeight: 48,
+  wrapperBorderRadius: 16,
+  borderRadius: 10,
 });
 
 export function LedgerGrid({ locale }: { locale: string }) {
