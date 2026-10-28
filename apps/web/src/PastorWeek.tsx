@@ -46,7 +46,7 @@ export function PastorWeek({ user, currency }: { user: SessionUser; currency: st
     setBusy(true);
     setError(null);
     try {
-      setBrief((await api.writeBrief()).brief);
+      setBrief((await api.writeBrief(i18n.language)).brief);
     } catch (e) {
       setError((e as Error).message);
     } finally {

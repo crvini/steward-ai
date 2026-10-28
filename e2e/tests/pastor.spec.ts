@@ -55,3 +55,25 @@ test('las estadísticas cuadran con el libro mayor', async ({ page }) => {
     Math.round(sinConfirmar.reduce((s, r) => s + r.amount, 0) * 100),
   );
 });
+
+test('el resumen sale en el idioma en que se lee la app, no en el guardado', async ({ page }) => {
+  await cerrarSesion(page);
+  await entrarComo(page, PERSONAS.pastor.nombre);
+
+  // El pastor tiene locale 'es' guardado; si cambia a inglés y pide un
+  // resumen nuevo, esperaría leerlo en inglés.
+  const res = await page.request.post('/api/brief', { data: { locale: 'en' } });
+  expect(res.status()).toBe(201);
+
+  const { brief } = (await res.json()) as { brief: { body: string } };
+  // Heurística simple pero suficiente: palabras funcionales que solo
+  // aparecen en uno de los dos idiomas.
+  expect(brief.body).toMatch(/\b(the|this|week|gifts?|received)\b/i);
+  expect(brief.body).not.toMatch(/\b(semana|ofrendas?|recibieron)\b/i);
+});
+
+test('la API rechaza un idioma que no soportamos', async ({ page }) => {
+  await cerrarSesion(page);
+  await entrarComo(page, PERSONAS.pastor.nombre);
+  expect((await page.request.post('/api/brief', { data: { locale: 'fr' } })).status()).toBe(400);
+});

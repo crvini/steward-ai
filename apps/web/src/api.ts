@@ -287,7 +287,12 @@ export const api = {
   stats: () => json<MonthStats>('/api/stats'),
   reconcile: (days = 30) => json<Reconciliation>(`/api/paypal/reconcile?days=${days}`),
   brief: () => json<{ brief: WeeklyBrief | null }>('/api/brief'),
-  writeBrief: () => json<{ brief: WeeklyBrief }>('/api/brief', { method: 'POST' }),
+  writeBrief: (locale: string) =>
+    json<{ brief: WeeklyBrief }>('/api/brief', {
+      method: 'POST',
+      // El resumen sale en el idioma en que se está leyendo la app.
+      body: JSON.stringify({ locale: locale.startsWith('es') ? 'es' : 'en' }),
+    }),
   ledger: () => json<{ rows: LedgerRow[] }>('/api/ledger'),
   draftImpact: (distributionId: string) =>
     json<{ drafted: number }>(`/api/impact/${encodeURIComponent(distributionId)}/draft`, {

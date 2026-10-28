@@ -7,6 +7,7 @@
  *   POST /api/brief          write (or rewrite) it
  */
 import { Router } from 'express';
+import { z } from 'zod';
 import { GiftFrequency, GiftStatus, Prisma, TransactionDirection, UserRole } from '@prisma/client';
 
 import { prisma } from '../db/client.js';
@@ -131,11 +132,25 @@ pastorRouter.get(
   },
 );
 
+/**
+ * El idioma lo manda el cliente, no la base.
+ *
+ * El resumen debe salir en el idioma en que la persona está leyendo la app,
+ * no en el que tiene guardado: un pastor que cambia a inglés en la barra
+ * superior y pide un resumen nuevo esperaría leerlo en inglés.
+ */
+const briefSchema = z.object({ locale: z.enum(['en', 'es']).optional() });
+
 pastorRouter.post(
   '/brief',
   requireRole(UserRole.TREASURER, UserRole.PASTOR),
   async (req, res, next) => {
     try {
+      const parsed = briefSchema.safeParse(req.body ?? {});
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'invalid_request', issues: parsed.error.issues });
+      }
+
       const limit = limiter.check(req.user!.id);
       if (!limit.allowed) {
         res.setHeader('Retry-After', String(limit.retryAfterSeconds));
@@ -201,7 +216,7 @@ pastorRouter.post(
         topFund: topFund ? { name: topFund[0], cents: topFund[1] } : null,
         awaitingPastor: awaitingPayable,
         unconfirmed: stats.unconfirmed,
-        locale: req.user!.locale,
+        locale: parsed.data.locale ?? req.user!.locale,
       };
 
       const body = await writeWeeklyBrief(facts);
