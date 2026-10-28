@@ -9,7 +9,7 @@
 import { useTranslation } from 'react-i18next';
 
 import type { Role, SessionUser } from './api';
-import { Logo } from './ui';
+import { LanguageToggle, Logo } from './ui';
 
 export type Tab = { id: string; label: string };
 
@@ -36,7 +36,7 @@ export function TopBar({
   onSwitchUser: (id: string) => void;
   onSignOut: () => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const tabs = TABS_BY_ROLE[user.role];
 
   return (
@@ -68,20 +68,7 @@ export function TopBar({
             {t('demo.badge')}
           </span>
 
-          <div className="flex gap-0.5 rounded-full bg-white/10 p-0.5">
-            {(['en', 'es'] as const).map((lng) => (
-              <button
-                key={lng}
-                type="button"
-                onClick={() => void i18n.changeLanguage(lng)}
-                className={`rounded-full px-2.5 py-1 text-xs font-semibold uppercase ${
-                  i18n.resolvedLanguage === lng ? 'bg-white text-navy-900' : 'text-white/70'
-                }`}
-              >
-                {lng}
-              </button>
-            ))}
-          </div>
+          <LanguageToggle tone="dark" />
 
           <select
             value={user.id}

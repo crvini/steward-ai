@@ -83,11 +83,19 @@ for (const [rol, { persona, pestañas }] of Object.entries(PESTAÑAS)) {
   }
 }
 
-test('la entrada se traduce entera en los dos idiomas', async ({ page }) => {
+test('la entrada se puede cambiar de idioma sin entrar', async ({ page }) => {
   await cerrarSesion(page);
   await page.goto('/');
   await page.waitForTimeout(1500);
 
-  const crudas = await clavesCrudasEnPantalla(page);
-  expect(crudas, 'claves sin traducir en la pantalla de entrada').toEqual([]);
+  // El selector tiene que estar en la primera pantalla: alguien con el
+  // navegador en español que quiera leer en inglés no debería tener que
+  // entrar primero para poder cambiarlo.
+  await cambiarIdioma(page, 'en');
+  await expect(page.getByRole('heading', { name: /explore .* as/i })).toBeVisible();
+  expect(await clavesCrudasEnPantalla(page)).toEqual([]);
+
+  await cambiarIdioma(page, 'es');
+  await expect(page.getByRole('heading', { name: /explorá .* como/i })).toBeVisible();
+  expect(await clavesCrudasEnPantalla(page)).toEqual([]);
 });

@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import type { ChurchResponse, Role, RolesResponse, SessionUser } from './api';
 import { formatCents } from './api';
 import { FundThread } from './FundThread';
-import { Logo } from './ui';
+import { LanguageToggle, Logo } from './ui';
 
 const INITIALS_TONE: Record<Role, string> = {
   DONOR: 'bg-fund-missions/10 text-fund-missions',
@@ -46,10 +46,15 @@ export function RoleChooser({
     <div className="grid min-h-screen lg:grid-cols-2">
       {/* Izquierda: la promesa */}
       <div className="flex flex-col justify-between bg-navy-900 px-8 py-10 text-white lg:px-14 lg:py-14">
-        <span className="flex items-center gap-2.5">
-          <Logo />
-          <span className="font-display text-xl font-bold">Steward AI</span>
-        </span>
+        <div className="flex items-center justify-between gap-4">
+          <span className="flex items-center gap-2.5">
+            <Logo />
+            <span className="font-display text-xl font-bold">Steward AI</span>
+          </span>
+          {/* En la izquierda oscura en pantallas grandes; en móvil la columna
+              derecha va debajo y este sigue siendo el primero que se ve. */}
+          <LanguageToggle tone="dark" />
+        </div>
 
         <div className="my-12 max-w-xl">
           <h1 className="font-display text-4xl leading-[1.08] font-extrabold lg:text-5xl">

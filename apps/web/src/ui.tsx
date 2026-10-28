@@ -7,6 +7,7 @@
  * stops looking like a decision.
  */
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type Variant = 'gold' | 'navy' | 'outline' | 'quiet' | 'danger';
 
@@ -78,5 +79,39 @@ export function Logo({ className = '' }: { className?: string }) {
       <span className="h-[3px] w-5 rounded-full bg-fund-missions" />
       <span className="h-[3px] w-5 rounded-full bg-fund-benevolence" />
     </span>
+  );
+}
+
+/**
+ * El selector de idioma.
+ *
+ * Vive acá y no en la barra superior porque la pantalla de entrada también
+ * lo necesita: alguien con el navegador en español que quiera leer en inglés
+ * no debería tener que entrar primero para poder cambiarlo. Ser bilingüe es
+ * una promesa del producto y la primera pantalla es donde se juzga.
+ */
+export function LanguageToggle({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
+  const { i18n } = useTranslation();
+
+  const base = tone === 'dark' ? 'bg-white/10' : 'bg-surface-alt';
+  const activo = tone === 'dark' ? 'bg-white text-navy-900' : 'bg-navy-900 text-white';
+  const inactivo = tone === 'dark' ? 'text-white/70' : 'text-ink-muted';
+
+  return (
+    <div className={`flex gap-0.5 rounded-full p-0.5 ${base}`}>
+      {(['en', 'es'] as const).map((lng) => (
+        <button
+          key={lng}
+          type="button"
+          onClick={() => void i18n.changeLanguage(lng)}
+          aria-pressed={i18n.resolvedLanguage === lng}
+          className={`rounded-full px-2.5 py-1 text-xs font-semibold uppercase ${
+            i18n.resolvedLanguage === lng ? activo : inactivo
+          }`}
+        >
+          {lng}
+        </button>
+      ))}
+    </div>
   );
 }
