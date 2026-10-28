@@ -103,19 +103,19 @@ test('el chat sigue el final y la propuesta queda a la vista', async ({ page }) 
 });
 
 test('un monto por encima del tope se rechaza, el tope exacto no', async ({ page }) => {
-  const fondos = await page.request.get('/api/church').then((r) => r.json());
-  const fundId = fondos.funds[0].id as string;
+  // Con un fondo inexistente a propósito: así se comprueba el límite sin
+  // crear una ofrenda de verdad, que ensuciaría a las demás pruebas.
+  // El monto se valida antes de buscar el fondo, así que el código dice
+  // cuál de los dos falló.
+  const pedir = (amountCents: number) =>
+    page.request
+      .post('/api/gifts', { data: { fundId: 'fondo-que-no-existe', amountCents } })
+      .then((r) => r.status());
 
-  // $10,000 es el tope de una ofrenda única: justo en el límite se acepta.
-  const enElTope = await page.request.post('/api/gifts', {
-    data: { fundId, amountCents: 1_000_000 },
-  });
-  expect(enElTope.status()).toBe(201);
-
-  const porEncima = await page.request.post('/api/gifts', {
-    data: { fundId, amountCents: 1_000_001 },
-  });
-  expect(porEncima.status()).toBe(400);
+  // $10,000 es exactamente el tope: pasa la validación y muere en el fondo.
+  expect(await pedir(1_000_000)).toBe(404);
+  // Un centavo más y ni siquiera llega ahí.
+  expect(await pedir(1_000_001)).toBe(400);
 });
 
 test('el campo recupera el foco para poder seguir escribiendo', async ({ page }) => {
