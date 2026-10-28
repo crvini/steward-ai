@@ -5,7 +5,7 @@
  * above, where the person confirms with the PayPal button — there is no path
  * from a model reply to a payment.
  */
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { streamGivingAgent, type GiftProposal } from './api';
@@ -21,6 +21,16 @@ export function GivingChat({ onProposal }: { onProposal: (p: GiftProposal) => vo
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null);
+  const hilo = useRef<HTMLDivElement | null>(null);
+  const campo = useRef<HTMLInputElement | null>(null);
+
+  // El hilo crece hacia abajo pero no se movía, así que la respuesta —y la
+  // tarjeta de propuesta que viene después— quedaban fuera de vista y
+  // parecía que no había pasado nada. Se sigue el final mientras escribe.
+  useEffect(() => {
+    const caja = hilo.current;
+    if (caja) caja.scrollTop = caja.scrollHeight;
+  }, [turns]);
 
   const send = async (text: string) => {
     const message = text.trim();
@@ -44,6 +54,12 @@ export function GivingChat({ onProposal }: { onProposal: (p: GiftProposal) => vo
           setTurns([...history, { role: 'assistant', content: answer }]);
         } else if (event.type === 'proposal') {
           onProposal(event.proposal);
+          // La tarjeta aparece debajo del chat; sin esto el donante no la ve.
+          setTimeout(() => {
+            document
+              .querySelector('[data-testid="ai-proposal"]')
+              ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 150);
         } else if (event.type === 'error') {
           const [kind, seconds] = event.message.split(':');
           setError(
@@ -59,6 +75,10 @@ export function GivingChat({ onProposal }: { onProposal: (p: GiftProposal) => vo
       }
     } finally {
       setStreaming(false);
+      // El campo se deshabilita mientras el asistente responde, y al
+      // deshabilitarse pierde el foco. Sin devolverlo, quien escribe el
+      // siguiente mensaje lo teclea en el vacío.
+      setTimeout(() => campo.current?.focus(), 0);
     }
   };
 
@@ -81,7 +101,11 @@ export function GivingChat({ onProposal }: { onProposal: (p: GiftProposal) => vo
           </div>
         </div>
       ) : (
-        <div className="flex max-h-72 flex-col gap-2 overflow-y-auto">
+        <div
+          ref={hilo}
+          className="flex max-h-72 flex-col gap-2 overflow-y-auto scroll-smooth"
+          aria-live="polite"
+        >
           {turns.map((turn, i) => (
             <div
               key={i}
@@ -113,6 +137,7 @@ export function GivingChat({ onProposal }: { onProposal: (p: GiftProposal) => vo
         className="flex gap-2"
       >
         <input
+          ref={campo}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder={t('chat.placeholder')}

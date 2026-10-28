@@ -80,3 +80,56 @@ test('una intención incompleta hace que pregunte, no que adivine', async ({ pag
   // ...pero no una propuesta.
   await expect(page.getByTestId('ai-proposal')).toHaveCount(0);
 });
+
+test('el chat sigue el final y la propuesta queda a la vista', async ({ page }) => {
+  const tarjeta = page.locator('section', { hasText: /dar a un fondo/i }).first();
+  const entrada = tarjeta.getByPlaceholder(/escribí qué te gustaría dar/i);
+
+  // Dos intercambios para que el hilo crezca más que su alto máximo.
+  for (const texto of ['Hola', 'Quiero dar $50 una sola vez para misiones']) {
+    await entrada.fill(texto);
+    await tarjeta.getByRole('button', { name: /enviar/i }).click();
+    await page.waitForTimeout(6000);
+  }
+
+  const hilo = tarjeta.locator('.overflow-y-auto').first();
+  const { alFinal } = await hilo.evaluate((el) => ({
+    // Sin auto-scroll el hilo se quedaba arriba y la respuesta no se veía.
+    alFinal: el.scrollHeight - el.scrollTop - el.clientHeight < 40,
+  }));
+  expect(alFinal, 'el hilo del chat no siguió al último mensaje').toBe(true);
+
+  await expect(page.getByTestId('ai-proposal')).toBeInViewport({ timeout: 10_000 });
+});
+
+test('un monto por encima del tope se rechaza, el tope exacto no', async ({ page }) => {
+  const fondos = await page.request.get('/api/church').then((r) => r.json());
+  const fundId = fondos.funds[0].id as string;
+
+  // $10,000 es el tope de una ofrenda única: justo en el límite se acepta.
+  const enElTope = await page.request.post('/api/gifts', {
+    data: { fundId, amountCents: 1_000_000 },
+  });
+  expect(enElTope.status()).toBe(201);
+
+  const porEncima = await page.request.post('/api/gifts', {
+    data: { fundId, amountCents: 1_000_001 },
+  });
+  expect(porEncima.status()).toBe(400);
+});
+
+test('el campo recupera el foco para poder seguir escribiendo', async ({ page }) => {
+  const tarjeta = page.locator('section', { hasText: /dar a un fondo/i }).first();
+  const entrada = tarjeta.getByPlaceholder(/escribí qué te gustaría dar/i);
+
+  await entrada.fill('Hola');
+  await tarjeta.getByRole('button', { name: /enviar/i }).click();
+  await expect(entrada).toBeEnabled({ timeout: 30_000 });
+
+  // Sin devolver el foco, el siguiente mensaje se teclea en el vacío: el
+  // campo se deshabilita mientras responde y al deshabilitarse lo pierde.
+  await expect(entrada).toBeFocused();
+
+  await page.keyboard.type('Quiero dar $25 una sola vez para misiones');
+  await expect(entrada).toHaveValue(/25/);
+});
