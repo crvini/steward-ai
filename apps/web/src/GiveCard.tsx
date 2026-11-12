@@ -82,7 +82,15 @@ let bootstrapPromise: Promise<Bootstrap> | null = null;
 
 const BOOTSTRAP_TIMEOUT_MS = 20_000;
 
-function bootstrapPayPal(currencyCode: string): Promise<Bootstrap> {
+/**
+ * PayPal names its languages `xx_XX`, not `xx`. Only the two the app already
+ * speaks are mapped; anything else falls back to English.
+ */
+function paypalLocale(language: string): string {
+  return language.startsWith('es') ? 'es_ES' : 'en_US';
+}
+
+function bootstrapPayPal(currencyCode: string, locale: string): Promise<Bootstrap> {
   const t0 = performance.now();
   const mark = (stage: string) => {
     if (import.meta.env.DEV) console.log(`[paypal] ${stage} +${Math.round(performance.now() - t0)}ms`);
@@ -103,6 +111,11 @@ function bootstrapPayPal(currencyCode: string): Promise<Bootstrap> {
         // el método de suscripción no existe en la instancia.
         components: ['paypal-payments', 'paypal-subscriptions'],
         pageType: 'checkout',
+        // Without this the button follows the browser's language, so it read
+        // "Pagar con PayPal" in the middle of an English screen. It is set
+        // once: createInstance tolerates no second call on the same page, so
+        // toggling EN/ES only moves the button on reload.
+        locale,
       });
       mark('instance:created');
 
@@ -157,7 +170,10 @@ export function GiveCard({
 
     (async () => {
       try {
-        const { sdk, eligible } = await bootstrapPayPal(church.church.currency);
+        const { sdk, eligible } = await bootstrapPayPal(
+          church.church.currency,
+          paypalLocale(i18n.language),
+        );
         if (cancelled) return;
         sdkRef.current = sdk;
         setStatus(eligible ? { kind: 'ready' } : { kind: 'ineligible' });
@@ -171,6 +187,9 @@ export function GiveCard({
     return () => {
       cancelled = true;
     };
+    // i18n.language is left out on purpose: the bootstrap is memoized and
+    // createInstance cannot be repeated, so re-running this on a language
+    // change would make no new instance. See the comment on `locale` above.
   }, [church.church.currency]);
 
   useEffect(() => {
