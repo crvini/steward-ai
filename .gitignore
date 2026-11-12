@@ -40,9 +40,14 @@ docs/MEJORAS-UI.md
 docs/ESTADO_DEL_PROYECTO.md
 docs/GUION_VIDEO.md
 docs/GUION_PRUEBAS.md
+docs/VIDEO_NARRACION.md
+docs/VIDEO.md
 docs/design/
 
 # Playwright
 e2e/test-results/
 e2e/playwright-report/
 e2e/.auth/
+
+# Datos del servidor del demo (host, usuario, llave). No va al repo.
+.deploy.env
