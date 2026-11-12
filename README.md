@@ -39,16 +39,29 @@ click and you are in, and you can switch roles from the top bar at any time.
 | **Daniel Ruiz**, treasurer | **Distributions** shows the AI's plan with a line blocked in red and every rule it checked. **Books** answers questions in plain language and filters the grid to match. **Audit** compares our ledger against PayPal. |
 | **Pastor Samuel Ortiz** | **This week** is a brief written by the AI from the week's books. **Approvals** is the second key: nothing is paid until he signs. |
 
-The fastest way to see the whole argument: as the treasurer, open
-**Distributions** and approve. Then switch to the pastor in the top bar and
-approve again. The money only moves after the second signature.
+The fastest way to see the whole argument, as the treasurer, in
+**Distributions**:
+
+1. The **Benevolence** plan at the top has a line in red. The rules refuse it,
+   so it can only be rejected — not signed. That is the guardrail working, and
+   it is deliberate: nobody can approve past a blocked line, not even the pastor.
+2. At the bottom, pick **Missions** and press **Propose distribution**. The AI
+   writes a fresh plan where every line passes.
+3. Press **Approve as treasurer**, switch to **Pastor Samuel** in the top bar,
+   approve again, then press **Send with PayPal Payouts**.
+
+The money only moves after the second signature, and a real sandbox batch id
+appears on the card. The same account cannot hold both keys.
+
+Only **Missions** and **Benevolence** have approved recipients, so those are the
+two funds a distribution can be proposed for.
 
 To actually pay at the checkout, sign in with a **PayPal sandbox buyer
 account** from your developer dashboard. No real money moves.
 
 ## Getting started
 
-**Requirements:** Node 22+, pnpm 9+, Docker (for PostgreSQL).
+**Requirements:** Node 20+, pnpm 9+, Docker (for PostgreSQL).
 
 ```bash
 # 1. Clone

@@ -44,6 +44,10 @@ docs/VIDEO_NARRACION.md
 docs/VIDEO.md
 docs/design/
 
+# Las tomas del video: pesan decenas de MB y el entregable es el enlace de
+# YouTube, no el archivo. GitHub además rechaza lo que pase de 100 MB.
+docs/Video/
+
 # Playwright
 e2e/test-results/
 e2e/playwright-report/
@@ -51,3 +55,4 @@ e2e/.auth/
 
 # Datos del servidor del demo (host, usuario, llave). No va al repo.
 .deploy.env
+docs/GUION_ESCENA_PAGO.md

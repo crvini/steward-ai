@@ -10,7 +10,8 @@
 - [ ] Spend limit configured on the Anthropic key for the public demo
 - [ ] Technical requirement (PayPal + AI) explained in the form
 - [ ] Instructions and test credentials for the judges
-- [ ] Sponsor tools checked (AG Grid, Render)
+- [ ] Sponsor tools checked — **AG Grid only**. Render NO: se desplegó en
+      el droplet propio, así que marcarlo sería falso.
 - [ ] "Challenges", "Accomplishments" and "What we learned" written from what actually happened
 - [ ] Submit before November 12, 2:00 PM (Guatemala time)
 
