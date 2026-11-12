@@ -3,6 +3,11 @@
 [![CI](https://github.com/crvini/steward-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/crvini/steward-ai/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+### ▶ [Watch the 3-minute demo](https://www.youtube.com/watch?v=YHkCKN2n5BE) · 🌐 [Try the live demo](https://steward.e-ministry.online)
+
+The live demo needs **no sign-up and no password**: pick a role on the entry
+screen and you are in. PayPal runs in **sandbox** — no real money moves.
+
 **Generosity with transparency — from the moment someone gives to the moment they see the fruit.**
 
 Steward AI is an AI generosity assistant for churches. Money comes in through PayPal,

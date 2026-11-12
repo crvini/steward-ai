@@ -10,12 +10,25 @@
 # backend sí se compila allá: tsc solo es mucho más liviano que un bundle.
 set -euo pipefail
 
-KEY="$HOME/.ssh/eministry_deploy"
-HOST="root@159.65.240.211"
-APP="/home/deploy/apps/steward-ai"
-REPO="https://github.com/crvini/steward-ai.git"
 RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOLO_PROBAR="${1:-}"
+
+# A dónde se despliega NO se escribe acá: el repo es público. Sale de
+# .deploy.env, que está en .gitignore. Ver reset-demo.sh, que hace lo mismo.
+[ -f "$RAIZ/.deploy.env" ] || { echo "✖  Falta .deploy.env (DEPLOY_HOST, DEPLOY_USER, DEPLOY_KEY, DEPLOY_APP, DEPLOY_APP_USER, REPO_URL, API_URL, WEB_URL)." >&2; exit 1; }
+set -a
+# shellcheck disable=SC1091
+source "$RAIZ/.deploy.env"
+set +a
+for v in DEPLOY_HOST DEPLOY_USER DEPLOY_KEY DEPLOY_APP DEPLOY_APP_USER REPO_URL; do
+  [ -n "${!v:-}" ] || { echo "✖  Falta $v en .deploy.env" >&2; exit 1; }
+done
+
+# El ~ de una variable no lo expande el shell, y ssh -i '~/...' falla.
+KEY="${DEPLOY_KEY/#\~/$HOME}"
+HOST="$DEPLOY_USER@$DEPLOY_HOST"
+APP="$DEPLOY_APP"
+REPO="$REPO_URL"
 
 paso() { printf '\n▶  %s\n' "$1"; }
 
@@ -49,7 +62,7 @@ if [ "$SOLO_PROBAR" = "--probar" ]; then
 fi
 
 paso "Backend: git pull, deps, prisma y build en el servidor"
-ssh -i "$KEY" "$HOST" "su - deploy -c '
+ssh -i "$KEY" "$HOST" "su - "$DEPLOY_APP_USER" -c '
 set -e
 cd $APP
 # git clone falla si la carpeta no está vacía, y acá ya vive el .env (que
@@ -70,10 +83,10 @@ paso "Frontend: subiendo el bundle ya compilado"
 # --delete deja la carpeta idéntica al build: sin esto los assets viejos con
 # hash se acumulan para siempre.
 rsync -az --delete -e "ssh -i $KEY" "$RAIZ/apps/web/dist/" "$HOST:$APP/web/"
-ssh -i "$KEY" "$HOST" "chown -R deploy:deploy $APP/web"
+ssh -i "$KEY" "$HOST" "chown -R $DEPLOY_APP_USER:$DEPLOY_APP_USER $APP/web"
 
 paso "Reiniciando el proceso"
-ssh -i "$KEY" "$HOST" "su - deploy -c '
+ssh -i "$KEY" "$HOST" "su - "$DEPLOY_APP_USER" -c '
 cd $APP
 pm2 describe steward-api >/dev/null 2>&1 \
   && pm2 restart steward-api --update-env \
@@ -85,7 +98,7 @@ paso "Comprobando que responda de verdad"
 # Un reload sin errores no significa que el sitio funcione: hay que pedirle
 # una página y mirar el código.
 sleep 3
-for u in https://api-steward.e-ministry.online/health https://steward.e-ministry.online/; do
+for u in "$API_URL/health" "$WEB_URL/"; do
   code=$(curl -sS -o /dev/null -m 30 -w '%{http_code}' "$u" || echo 000)
   printf '   %-52s HTTP %s\n' "$u" "$code"
   [ "$code" = "200" ] || { echo "✖  $u no respondió 200."; exit 1; }

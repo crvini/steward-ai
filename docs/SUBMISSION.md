@@ -4,18 +4,23 @@
 
 - [x] Public repo with MIT LICENSE, complete README and green CI
 - [x] Hosted demo working with test data — https://steward.e-ministry.online
-- [ ] Public YouTube video, under 3 minutes
+- [x] Public YouTube video, under 3 minutes — <https://www.youtube.com/watch?v=YHkCKN2n5BE> (2:43)
 - [ ] 4–6 screenshots at 3:2
-- [ ] "Built with" updated to what was actually used (include `anthropic` and `claude`)
+- [ ] "Built with" updated to what was actually used (include `anthropic` and
+      `claude`; also react, vite, ag-grid, express, prisma, postgresql, paypal)
 - [ ] Spend limit configured on the Anthropic key for the public demo
 - [ ] Technical requirement (PayPal + AI) explained in the form
-- [ ] Instructions and test credentials for the judges
+- [x] Instructions for the judges — README §For the judges. No credentials are
+      published: the demo needs no sign-up, and a PayPal sandbox checkout uses
+      the judge's own buyer account.
 - [ ] Sponsor tools checked — **AG Grid only**. Render NO: se desplegó en
       el droplet propio, así que marcarlo sería falso.
 - [ ] "Challenges", "Accomplishments" and "What we learned" written from what actually happened
 - [ ] Submit before November 12, 2:00 PM (Guatemala time)
 
 ## Draft texts
+
+**Video:** <https://www.youtube.com/watch?v=YHkCKN2n5BE>
 
 ### Elevator pitch
 
