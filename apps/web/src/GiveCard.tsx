@@ -83,11 +83,13 @@ let bootstrapPromise: Promise<Bootstrap> | null = null;
 const BOOTSTRAP_TIMEOUT_MS = 20_000;
 
 /**
- * PayPal names its languages `xx_XX`, not `xx`. Only the two the app already
- * speaks are mapped; anything else falls back to English.
+ * The v6 SDK wants BCP 47 with a hyphen (`en-US`), not the underscore form the
+ * older PayPal SDKs took: `en_US` is rejected outright with
+ * ERR_DEV_UNSUPPORTED_LOCALE, which leaves the card with no button at all.
+ * Only the two languages the app speaks are mapped; anything else is English.
  */
 function paypalLocale(language: string): string {
-  return language.startsWith('es') ? 'es_ES' : 'en_US';
+  return language.startsWith('es') ? 'es-ES' : 'en-US';
 }
 
 function bootstrapPayPal(currencyCode: string, locale: string): Promise<Bootstrap> {
